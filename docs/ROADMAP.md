@@ -1,24 +1,32 @@
-# Clothes AI product roadmap
+# Clothes AI roadmap
 
-## Shipped in MVP
-- Uzbek mobile-first landing page
-- Demo fashion catalog (not inventory)
-- User photo preview with format and size validation
-- No photo retention
-- Flask API and CI smoke tests
+Bosqichlar konsepsiyadagi "darvoza"larga bogʻliq: keyingisiga faqat shart bajarilgach oʻtiladi.
 
-## Phase 2: safe pilot
-- Authenticated buyer and seller accounts, email verification, RBAC
-- Seller product CRUD with cloud database and object storage
-- Catalog assets and variant management
-- AI inference via licensed provider with per-user rate limits, cost caps and consent
-- Job status / retry / transient image storage and automated deletion
-- Full image safety pipeline, privacy policy and retention notice
+## 1-bosqich (0–6 oy, Toshkent, toʻy/kechki liboslar) — kodda
+- [x] Yagona katalog, filtrlar, qidiruv
+- [x] Xarita va oʻlchami bor eng yaqin doʻkon
+- [x] Bron va doʻkon tasdigʻi (panel + Telegram tugmalari), avtomatik muddat
+- [x] Doʻkon paneli: mahsulot, oʻlcham, qoldiq, rasm, profil, statistika
+- [x] "Oilamga yuborib soʻray" (ovoz berish havolasi)
+- [x] Telegram Mini App autentifikatsiyasi va bot
+- [x] Try-on va AI fotograf infratuzilmasi (navbat, maxfiylik, limitlar)
+- [ ] Tijoriy litsenziyali try-on provayderini tanlash va ulash (`TRYON_PROVIDER=http`)
+- [ ] AI fotografni yoqish (`PHOTO_PROVIDER=rembg` yoki API)
+- [ ] 20–30 hamkor doʻkonni ulash, shartnomada bepul muddat va keyingi tarif
+- [ ] Yurist: shaxsiy maʼlumotlarni saqlash joyi (Oʻzbekiston qonunchiligi)
+- [ ] Administrator paneli (hozir CLI), doʻkonlarni tekshirish jarayoni
+- [ ] Monitoring va zaxira nusxa (backup)
 
-## Phase 3: commerce
-- Checkout, payment-provider integration and webhooks
-- Shipping, returns, seller reconciliation
-- Size prediction based on product measurements (not visual try-on output)
-- Analytics and observability
+**Darvoza 1:** real bronlar va qayta kelayotgan xaridorlar.
 
-Do not claim the AI feature works until a real model, usage budget, security review and provider credentials have been configured.
+## 2-bosqich (6–12 oy)
+- Boshqa kiyim kategoriyalari
+- Oʻlcham profili (boʻy, vazn, odatiy oʻlcham) va tavsiya
+- Obraz yigʻish (turli doʻkonlardagi kiyimlar)
+- 1C / MoySklad sinxronlash
+
+**Darvoza 2:** doʻkonlar platforma olib kelgan xaridorlarni statistikada koʻradi.
+
+## 3-bosqich (12–24 oy)
+- Boshqa hududlar, Google Play / App Store ilovalari (xuddi shu API)
+- Obuna, komissiya, reklama; ilova ichida toʻlov va yetkazish

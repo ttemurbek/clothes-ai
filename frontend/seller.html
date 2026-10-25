@@ -1,1 +1,166 @@
-<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Clothes AI — Seller Demo</title><link rel="stylesheet" href="/styles.css"><style>body{background:#f6f5f7}.dashboard{max-width:1150px;margin:40px auto;padding:0 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px}.top a{color:#6a4697}.warning{background:#fff0d5;border:1px solid #edce81;padding:15px;border-radius:7px;margin:18px 0}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.metric,.table{background:white;border:1px solid #e8e5ea;border-radius:9px;padding:22px}.metric strong{display:block;font-size:32px;margin-top:10px}.metric span{color:#777}.table{margin-top:20px;overflow:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{border-bottom:1px solid #eee;padding:13px 8px}th{color:#666;font-size:12px}.muted{color:#777;font-size:13px}@media(max-width:650px){.cards{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}</style></head><body><header class="topbar"><a href="/" class="brand">CLOTHES<span>AI</span></a><a href="/">← Bosh sahifa</a></header><main class="dashboard"><div class="top"><div><p class="eyebrow">SELLER STUDIO / PREVIEW</p><h1>Sotuvchi paneli</h1></div><span class="muted">Demo hisob</span></div><div class="warning" role="note"><b>Demo rejim.</b> Bu ko‘rsatkichlar haqiqiy savdo ma’lumotlari emas. Akkauntlar, sotuvchilar huquqlari va ma’lumotlar bazasi hali ulanmagan.</div><div class="cards"><div class="metric"><span>Demo mahsulotlar</span><strong id="total">—</strong></div><div class="metric"><span>Demo sotuvlar</span><strong>0</strong></div><div class="metric"><span>Demo tushum</span><strong>0 so‘m</strong></div></div><section class="table"><h2>Namuna mahsulotlar</h2><table><thead><tr><th>Mahsulot</th><th>Kategoriya</th><th>Narx</th><th>O‘lchamlar</th></tr></thead><tbody id="rows"><tr><td>Yuklanmoqda...</td></tr></tbody></table></section><p class="muted">Keyingi bosqich: sotuvchi autentifikatsiyasi, mahsulot qo‘shish/tahrirlash, buyurtmalar, izohlar va analitika.</p></main><script>fetch("/api/products").then(r=>r.json()).then(({items})=>{document.getElementById("total").textContent=items.length;const body=document.getElementById("rows");body.replaceChildren(...items.map(p=>{const tr=document.createElement("tr");[p.name,p.category,new Intl.NumberFormat("uz-UZ").format(p.price)+" so‘m",p.sizes.join(", ")].forEach(s=>{const td=document.createElement("td");td.textContent=s;tr.append(td)});return tr}))}).catch(()=>{document.getElementById("rows").textContent="Server bilan aloqa yo‘q."})</script></body></html>
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Clothes AI — doʻkon paneli</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script type="module" src="/js/seller.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="brand">CLOTHES<span>AI</span></a>
+    <span class="pill accent">Doʻkon paneli</span>
+    <nav class="topnav" aria-label="Asosiy"><a href="/">Katalogga oʻtish</a></nav>
+    <button class="btn ghost sm" id="logout" hidden>Chiqish</button>
+  </div>
+</header>
+
+<!-- sign in / register -->
+<main class="wrap auth" id="auth" hidden>
+  <div class="box">
+    <div><p class="eyebrow">Doʻkonlar uchun · 1–2 yil bepul</p><h1 class="mt">Doʻkoningizni onlayn olib chiqing</h1>
+      <p class="muted my">Bepul vitrina, AI bilan katalog rasmlari, Telegramda bronlar va xaridorlar statistikasi.</p></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-login" aria-selected="true">Kirish</button>
+      <button role="tab" id="tab-register" aria-selected="false">Roʻyxatdan oʻtish</button>
+    </div>
+    <form id="login-form" novalidate>
+      <div class="variants">
+        <label class="field"><span>Email yoki telefon</span><input class="input" id="li-login" autocomplete="username" required></label>
+        <label class="field"><span>Parol</span><input class="input" id="li-password" type="password" autocomplete="current-password" required></label>
+        <p class="form-error" id="li-error" role="alert"></p>
+        <button class="btn primary block" type="submit">Kirish</button>
+      </div>
+    </form>
+    <form id="register-form" novalidate hidden>
+      <div class="variants">
+        <label class="field"><span>Doʻkon nomi</span><input class="input" id="rg-shop" maxlength="120" required></label>
+        <div class="grid-2">
+          <label class="field"><span>Tuman</span><input class="input" id="rg-district" maxlength="80" placeholder="Chilonzor"></label>
+          <label class="field"><span>Doʻkon telefoni</span><input class="input" id="rg-phone" type="tel" inputmode="tel" placeholder="+998 90 123 45 67" required></label>
+        </div>
+        <label class="field"><span>Manzil</span><input class="input" id="rg-address" maxlength="255" placeholder="Koʻcha, uy, moʻljal"></label>
+        <label class="field"><span>Ismingiz</span><input class="input" id="rg-name" maxlength="120" autocomplete="name"></label>
+        <label class="field"><span>Login (email yoki telefon)</span><input class="input" id="rg-login" autocomplete="username" required></label>
+        <label class="field"><span>Parol <span class="muted">(kamida 8 belgi)</span></span><input class="input" id="rg-password" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label class="check"><input type="checkbox" id="rg-agree"> <span>Doʻkon maʼlumotlari toʻgʻriligini tasdiqlayman. Platforma dastlabki davrda bepul; pullik tarif boshlanishidan oldin oldindan xabar beriladi.</span></label>
+        <p class="form-error" id="rg-error" role="alert"></p>
+        <button class="btn primary block" type="submit">Doʻkonni roʻyxatdan oʻtkazish</button>
+        <p class="hint">Roʻyxatdan oʻtgach maʼlumotlaringiz tekshiriladi va doʻkon katalogda koʻrinadi. Shu vaqtda mahsulot qoʻshib turishingiz mumkin.</p>
+      </div>
+    </form>
+  </div>
+</main>
+
+<!-- panel -->
+<div class="wrap panel" id="panel" hidden>
+  <nav class="side" aria-label="Panel boʻlimlari">
+    <button data-tab="overview" aria-current="true">📊 Umumiy</button>
+    <button data-tab="reservations">🧾 Bronlar <span class="badge" id="pending-badge" hidden></span></button>
+    <button data-tab="products">👗 Mahsulotlar</button>
+    <button data-tab="shop">🏬 Doʻkon</button>
+  </nav>
+  <main>
+    <div id="status-note"></div>
+
+    <section data-section="overview">
+      <div class="box">
+        <div class="box-head"><div><h2>Natijalar</h2><p class="muted small">Platforma doʻkoningizga nima olib kelgani</p></div>
+          <select class="select" id="stats-days"><option value="7">7 kun</option><option value="30" selected>30 kun</option><option value="90">90 kun</option></select></div>
+        <div class="metrics" id="metrics"></div>
+      </div>
+      <div class="box"><h2>Voronka</h2><p class="muted small">Koʻrishdan doʻkonga kelishgacha</p><div class="funnel" id="funnel"></div></div>
+      <div class="box"><h2>Kunlar boʻyicha</h2><div class="chart" id="chart" role="img" aria-label="Kunlik koʻrishlar va bronlar"></div>
+        <div class="legend"><span><i class="lg-a"></i>Koʻrishlar</span><span><i class="lg-b"></i>Bronlar</span></div></div>
+      <div class="box"><h2>Eng koʻp koʻrilgan</h2><table class="list" id="top-products"></table></div>
+    </section>
+
+    <section data-section="reservations" hidden>
+      <div class="box">
+        <div class="box-head"><h2>Bronlar</h2>
+          <select class="select" id="res-filter"><option value="active">Faol</option><option value="">Hammasi</option><option value="pending">Tasdiq kutilmoqda</option><option value="confirmed">Tasdiqlangan</option><option value="visited">Kelgan</option><option value="sold">Sotilgan</option><option value="declined">Rad etilgan</option><option value="expired">Muddati tugagan</option></select></div>
+        <div class="res-list" id="res-list"></div>
+      </div>
+    </section>
+
+    <section data-section="products" hidden>
+      <div class="box">
+        <div class="box-head"><div><h2>Mahsulotlar</h2><p class="muted small" id="products-summary"></p></div>
+          <button class="btn primary" id="add-product">＋ Mahsulot qoʻshish</button></div>
+        <table class="list responsive" id="product-table"></table>
+      </div>
+    </section>
+
+    <section data-section="shop" hidden>
+      <form class="box" id="shop-form" novalidate>
+        <div class="box-head"><h2>Doʻkon maʼlumotlari</h2></div>
+        <div class="variants">
+          <div class="grid-2">
+            <label class="field"><span>Nomi</span><input class="input" name="name" maxlength="120" required></label>
+            <label class="field"><span>Telefon</span><input class="input" name="phone" type="tel" inputmode="tel" required></label>
+            <label class="field"><span>Tuman</span><input class="input" name="district" maxlength="80"></label>
+            <label class="field"><span>Ish vaqti</span><input class="input" name="hours" maxlength="64" placeholder="10:00–20:00"></label>
+          </div>
+          <label class="field"><span>Manzil</span><input class="input" name="address" maxlength="255"></label>
+          <label class="field"><span>Instagram</span><input class="input" name="instagram" maxlength="80" placeholder="@dokon"></label>
+          <label class="field"><span>Tavsif</span><textarea class="input" name="description" maxlength="1000"></textarea></label>
+          <div class="field"><span>Xaritadagi joyi</span><div id="pick-map"></div><span class="hint" id="pick-hint">Xaritani bosib doʻkon joyini belgilang.</span></div>
+          <p class="form-error" id="shop-error" role="alert"></p>
+          <div><button class="btn primary" type="submit">Saqlash</button></div>
+        </div>
+      </form>
+      <div class="box">
+        <h2>Telegram bildirishnomalari</h2>
+        <p class="muted small my" id="tg-state"></p>
+        <button class="btn" id="tg-link">Telegramga ulash</button>
+      </div>
+      <form class="box" id="password-form" novalidate>
+        <h2>Parolni oʻzgartirish</h2>
+        <div class="grid-2 mt">
+          <label class="field"><span>Joriy parol</span><input class="input" id="pw-current" type="password" autocomplete="current-password"></label>
+          <label class="field"><span>Yangi parol</span><input class="input" id="pw-new" type="password" autocomplete="new-password" minlength="8"></label>
+        </div>
+        <p class="form-error" id="pw-error" role="alert"></p>
+        <button class="btn" type="submit">Oʻzgartirish</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- product editor -->
+<dialog id="product-editor" aria-labelledby="pe-title">
+  <form id="pe-form" novalidate>
+    <div class="dialog-head"><h2 id="pe-title">Mahsulot</h2><button class="icon-btn" type="button" data-close aria-label="Yopish">✕</button></div>
+    <div class="dialog-body">
+      <div class="field"><span>Rasm</span>
+        <label class="photo-drop" id="pe-drop"><input type="file" id="pe-image" accept="image/jpeg,image/png,image/webp"><img id="pe-preview" alt="Mahsulot rasmi" hidden><span id="pe-drop-text">📷 Telefonda oddiy suratga oling va shu yerga yuklang</span></label>
+        <label class="check" id="pe-ai-row"><input type="checkbox" id="pe-ai"> <span>✨ AI fotograf: fonni tozalab, studiya rasmiga aylantirish</span></label>
+        <button class="btn ghost sm danger" type="button" id="pe-remove-image" hidden>Rasmni olib tashlash</button>
+      </div>
+      <label class="field"><span>Nomi</span><input class="input" id="pe-name" maxlength="160" required></label>
+      <div class="grid-2">
+        <label class="field"><span>Kategoriya</span><select class="select" id="pe-category"></select></label>
+        <label class="field"><span>Rang</span><select class="select" id="pe-color"></select></label>
+      </div>
+      <label class="field"><span>Narx (soʻm)</span><input class="input" id="pe-price" inputmode="numeric" placeholder="1 250 000" required></label>
+      <label class="field"><span>Tavsif</span><textarea class="input" id="pe-description" maxlength="2000" placeholder="Mato, bichim, qaysi tadbir uchun"></textarea></label>
+      <div class="field"><span>Oʻlchamlar va qoldiq</span>
+        <div class="variants" id="pe-variants"></div>
+        <div class="row-gap"><button class="btn sm" type="button" id="pe-add-size">＋ Oʻlcham</button>
+          <button class="btn ghost sm" type="button" data-preset="XS,S,M,L,XL">XS–XL</button>
+          <button class="btn ghost sm" type="button" data-preset="46,48,50,52,54">46–54</button>
+          <button class="btn ghost sm" type="button" data-preset="Standart">Standart</button></div>
+      </div>
+      <label class="check"><input type="checkbox" id="pe-active" checked> <span>Katalogda koʻrsatish</span></label>
+      <p class="form-error" id="pe-error" role="alert"></p>
+    </div>
+    <div class="dialog-foot"><button class="btn danger" type="button" id="pe-delete" hidden>Oʻchirish</button><button class="btn" type="button" data-close>Bekor</button><button class="btn primary" type="submit" id="pe-save">Saqlash</button></div>
+  </form>
+</dialog>
+</body>
+</html>

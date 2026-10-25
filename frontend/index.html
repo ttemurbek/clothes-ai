@@ -2,30 +2,209 @@
 <html lang="uz">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Clothes AI — Toshkent kiyim do‘konlari xaritasi va virtual kiyinish xonasi">
-<title>Clothes AI — Kelajak modasi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Clothes AI — Toshkent doʻkonlaridagi kiyimlar bitta joyda: toping, oʻzingizda koʻring va oʻlchami bor eng yaqin doʻkondan bron qiling.">
+<meta name="theme-color" content="#faf8f5">
+<meta property="og:title" content="Clothes AI — kiyimlar xaritasi va virtual kiyinish xonasi">
+<meta property="og:description" content="Kiyimni top. Oʻzingda koʻr. Doʻkondan ol.">
+<title>Clothes AI — kiyimlar xaritasi</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
-<script src="/app.js" defer></script>
+<script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+<script type="module" src="/js/app.js"></script>
 </head>
-<body>
+<body class="has-tabbar">
+<div class="demo-bar" id="demo-bar" hidden>Hozir namuna doʻkonlar va mahsulotlar koʻrsatilmoqda — haqiqiy bron qabul qilinmaydi. <a href="/seller">Doʻkoningizni qoʻshing →</a></div>
 <header class="topbar">
-  <a href="/" class="brand">CLOTHES<span>AI</span></a>
-  <nav aria-label="Asosiy"><a href="#collection">Kolleksiya</a><a href="#try-on">AI kiyib ko‘rish</a><a href="#about">Biz haqimizda</a><a href="/seller.html">Sotuvchi paneli</a></nav>
-  <a href="#try-on" class="header-cta">Sinab ko‘rish ↗</a>
+  <div class="wrap">
+    <a href="/" class="brand" aria-label="Clothes AI bosh sahifa">CLOTHES<span>AI</span></a>
+    <nav class="topnav" aria-label="Asosiy">
+      <a href="#catalog">Katalog</a>
+      <a href="#map-section">Xarita</a>
+      <a href="#how">Qanday ishlaydi</a>
+      <a href="#" data-open="reservations">Bronlarim<span class="badge" data-res-badge hidden></span></a>
+      <a href="/seller" class="web-only">Doʻkonlar uchun</a>
+    </nav>
+  </div>
 </header>
+
 <main>
 <section class="hero">
-  <div class="hero-text"><div class="eyebrow">✦ AI POWERED FASHION EXPERIENCE</div>
-  <h1>Kiyimni top. <em>O‘zingda ko‘r.</em> Do‘kondan ol.</h1>
-  <p>Clothes AI shahardagi butiklarni bir joyga jamlaydi. Kiyim, narx va mavjud o‘lchamlarni solishtiring, yaqin do‘konni toping. Savdo do‘konning o‘zida amalga oshadi.</p>
-  <a class="button primary" href="#try-on">Virtual kiyib ko‘rish <span>↗</span></a>
-  <div class="note">MVP demo • AI generatsiya hozircha ulanmagan</div></div>
-  <div class="hero-art"><div class="art-circle"></div><span class="hero-emoji" role="img" aria-label="Kiyimlar">👔</span><div class="art-label">YOUR STYLE.<br>YOUR RULES.</div></div>
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Toshkent · doʻkonlar xaritasi + virtual kiyinish xonasi</p>
+      <h1>Kiyimni top. <em>Oʻzingda koʻr.</em> Doʻkondan ol.</h1>
+      <p class="hero-lead">Shahardagi doʻkonlarning kiyimlari bitta joyda. Narx va oʻlchamni solishtiring, oʻlchamingiz bor eng yaqin doʻkonni toping va bron qiling — kiyib koʻrib, doʻkonning oʻzida sotib olasiz.</p>
+      <form class="searchbox" id="hero-search" role="search">
+        <label for="hero-q" class="sr-only">Kiyim qidirish</label>
+        <span aria-hidden="true">🔎</span>
+        <input id="hero-q" type="search" placeholder="Kelinlik libosi, kostyum, atlas…" autocomplete="off" enterkeyhint="search">
+        <button class="btn primary sm" type="submit">Qidirish</button>
+      </form>
+      <div class="hero-steps"><span><b>1.</b> Toping</span><span><b>2.</b> Oʻzingizda koʻring</span><span><b>3.</b> Bron qiling</span><span><b>4.</b> Doʻkonda oling</span></div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="stack">👗</div>
+      <div class="tag t1">📍<span><b>1,2 km</b>M oʻlcham bor</span></div>
+      <div class="tag t2">✅<span><b>Bron tasdiqlandi</b>24 soat olib qoʻyiladi</span></div>
+    </div>
+  </div>
 </section>
-<section id="collection" class="section"><div class="section-heading"><div><p class="eyebrow">SHOP DISCOVERY · TOSHKENT DEMO</p><h2>Do‘konlardagi kiyimlarni toping</h2></div><p>Hozircha namuna katalog va qoldiqlar</p></div><div class="try-card" style="margin-bottom:22px"><label for="search">Kiyim qidirish</label><input id="search" placeholder="Nomi, rang yoki kategoriya"><label for="size-filter">Mavjud o‘lcham</label><select id="size-filter"><option value="">Barchasi</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></div><div id="products" class="products" aria-live="polite"></div></section>
-<section id="try-on" class="section try-on"><div><p class="eyebrow">FUTURE OF FASHION</p><h2>AI yordamida kiyib ko‘ring</h2><p>Bu bosqichda suratni tanlash, mahsulotni belgilash va so‘rov yuborish interfeysi ishlaydi. Real natija uchun AI model integratsiyasi talab qilinadi.</p><div class="steps"><span>01 / Surat</span><span>02 / Kiyim</span><span>03 / Natija</span></div></div>
-<div class="try-card"><label for="photo">Suratingiz (JPG, PNG, WebP; 8 MB gacha)</label><input id="photo" type="file" accept="image/png,image/jpeg,image/webp"><img id="preview" alt="Tanlangan surat" hidden><label for="product">Kiyimni tanlang</label><select id="product"></select><button id="generate" class="button primary">AI kiyib ko‘rish ↗</button><p id="result" role="status" aria-live="polite">Suratingiz serverda saqlanmaydi.</p></div></section>
-<section id="about" class="about"><p class="eyebrow">CLOTHES AI</p><h2>Kiyimlar xaritasi + virtual kiyinish xonasi.</h2><p>Biz do‘konlarga raqobatchi emasmiz: xaridorni kerakli kiyim va uni sotadigan do‘konga yo‘naltiramiz. Telegram Mini App, AI fotograf va tasdiqlangan bron keyingi bosqichlarda.</p></section>
-</main><footer><strong>CLOTHES<span>AI</span></strong><span>© 2026 Clothes AI · Mahsulotlar va do‘konlar DEMO</span></footer>
-</body></html>
+
+<section class="section tight" id="catalog">
+  <div class="wrap">
+    <div class="section-head">
+      <div><p class="eyebrow" id="catalog-eyebrow">Barcha doʻkonlar</p><h2 id="catalog-title">Katalog</h2></div>
+    </div>
+    <div class="filters" id="filters">
+      <div class="chips" id="category-chips" role="group" aria-label="Kategoriya"></div>
+      <div class="filter-row">
+        <label class="sr-only" for="f-size">Oʻlcham</label>
+        <select class="select" id="f-size"><option value="">Oʻlcham: barchasi</option></select>
+        <label class="sr-only" for="f-color">Rang</label>
+        <select class="select" id="f-color"><option value="">Rang: barchasi</option></select>
+        <label class="sr-only" for="f-price">Narx</label>
+        <select class="select" id="f-price">
+          <option value="">Narx: barchasi</option>
+          <option value="0-500000">500 ming soʻmgacha</option>
+          <option value="500000-1500000">500 ming – 1,5 mln</option>
+          <option value="1500000-3000000">1,5 – 3 mln</option>
+          <option value="3000000-">3 mln dan yuqori</option>
+        </select>
+        <label class="sr-only" for="f-sort">Saralash</label>
+        <select class="select" id="f-sort">
+          <option value="relevance">Saralash: mos</option>
+          <option value="near">Eng yaqin</option>
+          <option value="price_asc">Arzonroq</option>
+          <option value="price_desc">Qimmatroq</option>
+          <option value="new">Yangi</option>
+        </select>
+        <button class="chip" id="f-near" type="button" aria-pressed="false">📍 Yaqinimda</button>
+        <button class="btn ghost sm" id="f-reset" type="button" hidden>Tozalash ✕</button>
+      </div>
+    </div>
+    <div class="result-line"><span id="result-count" aria-live="polite"></span><span id="location-note"></span></div>
+    <div class="products" id="products" aria-busy="true"></div>
+    <div class="more"><button class="btn" id="load-more" hidden>Yana koʻrsatish</button></div>
+  </div>
+</section>
+
+<section class="section" id="map-section">
+  <div class="wrap">
+    <div class="section-head">
+      <div><p class="eyebrow">Xarita</p><h2>Oʻlchamingiz bor yaqin doʻkonlar</h2></div>
+      <p class="muted small" id="map-caption">Katalog filtrlari xaritaga ham taʼsir qiladi.</p>
+    </div>
+    <div class="map-layout">
+      <div id="map" role="region" aria-label="Doʻkonlar xaritasi"></div>
+      <div class="shop-list" id="shop-list"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head"><div><p class="eyebrow">Qanday ishlaydi</p><h2>Onlayn tanlang — oflayn sotib oling</h2></div></div>
+    <div class="how">
+      <div class="how-card">
+        <p class="eyebrow">Xaridor uchun</p>
+        <h3>5 qadamda kerakli kiyim qoʻlingizda</h3>
+        <ol>
+          <li><span><b>Oching.</b> Telegram ichidagi mini ilova yoki shu sayt — hech narsa oʻrnatish shart emas.</span></li>
+          <li><span><b>Qidiring.</b> Kategoriya, narx, rang, oʻlcham va joylashuv boʻyicha barcha doʻkonlardan.</span></li>
+          <li><span><b>Kiyib koʻring.</b> Suratingizda virtual kiyib koʻring, oilangizdan fikr soʻrang.</span></li>
+          <li><span><b>Bron qiling.</b> Oʻlchami bor eng yaqin doʻkon tasdiqlaydi va kiyimni olib qoʻyadi.</span></li>
+          <li><span><b>Doʻkonda oling.</b> Borasiz, kiyib koʻrasiz, yoqsa sotib olasiz.</span></li>
+        </ol>
+      </div>
+      <div class="how-card dark">
+        <p class="eyebrow">Doʻkonlar uchun · bepul</p>
+        <h3>Bepul onlayn vitrina va yangi xaridorlar</h3>
+        <ol>
+          <li><span><b>Roʻyxatdan oʻting.</b> Nom, manzil, ish vaqti, telefon.</span></li>
+          <li><span><b>Tovar qoʻshing.</b> Telefonda suratga oling — AI fotograf fonni tozalaydi.</span></li>
+          <li><span><b>Qoldiqni yangilang.</b> Oddiy panel orqali oʻlcham va soni.</span></li>
+          <li><span><b>Bronlarni qabul qiling.</b> Telegramda xabar keladi, bir tugma bilan tasdiqlaysiz.</span></li>
+          <li><span><b>Natijani koʻring.</b> Koʻrishlar, kiyib koʻrishlar, bronlar va kelgan xaridorlar.</span></li>
+        </ol>
+        <p class="mt"><a class="btn accent" href="/seller">Doʻkonni qoʻshish →</a></p>
+      </div>
+    </div>
+    <div class="promise">
+      <div><b>🔒 Suratingiz sizniki</b>Yuklangan surat qayta ishlangach oʻchadi, natija 24 soatdan keyin oʻchiriladi. Doʻkonlar uni koʻrmaydi.</div>
+      <div><b>🗑 Bir tugma bilan oʻchirish</b>Barcha maʼlumotlaringizni istalgan payt oʻchirishingiz mumkin.</div>
+      <div><b>🤝 Doʻkonlar hamkori</b>Biz kiyim sotmaymiz — xaridorni toʻgʻri kiyim va toʻgʻri doʻkon bilan bogʻlaymiz.</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>© 2026 Clothes AI · Toshkent</span>
+    <nav><a href="/privacy">Maxfiylik</a><a href="/seller">Doʻkonlar uchun</a><a href="#" data-open="reservations">Bronlarim</a></nav>
+  </div>
+</footer>
+
+<nav class="tabbar" aria-label="Pastki menyu">
+  <a href="#catalog"><span aria-hidden="true">🛍</span>Katalog</a>
+  <a href="#map-section"><span aria-hidden="true">📍</span>Xarita</a>
+  <a href="#" data-open="tryon-history"><span aria-hidden="true">🪞</span>Kiyinish</a>
+  <a href="#" data-open="reservations"><span aria-hidden="true">🧾</span>Bronlar<span class="badge" data-res-badge hidden></span></a>
+</nav>
+
+<div class="tray" id="compare-tray" hidden>
+  <span id="compare-label"></span>
+  <button class="btn sm ghost" id="compare-clear" aria-label="Tanlovni tozalash">✕</button>
+  <button class="btn sm accent" id="compare-share">Oilamga soʻray</button>
+</div>
+
+<!-- product -->
+<dialog id="product-dialog" class="wide" aria-labelledby="pd-title">
+  <div class="dialog-head"><span class="eyebrow" id="pd-eyebrow"></span><button class="icon-btn" data-close aria-label="Yopish">✕</button></div>
+  <div class="dialog-body" id="pd-body"></div>
+</dialog>
+
+<!-- reservation -->
+<dialog id="reserve-dialog" aria-labelledby="rv-title">
+  <form method="dialog" id="reserve-form" novalidate>
+    <div class="dialog-head"><h2 id="rv-title">Bron qilish</h2><button class="icon-btn" type="button" data-close aria-label="Yopish">✕</button></div>
+    <div class="dialog-body" id="rv-body">
+      <div class="res" id="rv-product"></div>
+      <div class="notice info small" id="rv-terms"></div>
+      <label class="field"><span>Ismingiz</span><input class="input" id="rv-name" autocomplete="name" maxlength="120" required></label>
+      <label class="field"><span>Telefon</span><input class="input" id="rv-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required></label>
+      <label class="field"><span>Izoh <span class="muted">(ixtiyoriy)</span></span><textarea class="input" id="rv-note" maxlength="300" placeholder="Masalan: ertaga soat 18:00 da boraman"></textarea></label>
+      <label class="check"><input type="checkbox" id="rv-agree"> <span>Ismim va telefonim faqat shu doʻkonga bronni tasdiqlash uchun yuborilishiga roziman.</span></label>
+      <p class="form-error" id="rv-error" role="alert"></p>
+    </div>
+    <div class="dialog-foot"><button class="btn" type="button" data-close>Bekor</button><button class="btn primary" id="rv-submit" type="submit">Bron yuborish</button></div>
+  </form>
+</dialog>
+
+<!-- try-on -->
+<dialog id="tryon-dialog" aria-labelledby="to-title">
+  <div class="dialog-head"><h2 id="to-title">Virtual kiyib koʻrish</h2><button class="icon-btn" data-close aria-label="Yopish">✕</button></div>
+  <div class="dialog-body" id="to-body"></div>
+  <div class="dialog-foot" id="to-foot"></div>
+</dialog>
+
+<!-- my reservations / data -->
+<dialog id="reservations-dialog" aria-labelledby="mr-title">
+  <div class="dialog-head"><h2 id="mr-title">Bronlarim</h2><button class="icon-btn" data-close aria-label="Yopish">✕</button></div>
+  <div class="dialog-body"><div class="res-list" id="mr-list"></div>
+    <details class="small muted"><summary>Maxfiylik</summary>
+      <p class="my">Barcha try-on suratlari, ulashgan havolalaringiz va ovozlaringiz oʻchiriladi; bronlardagi ism va telefon anonimlashtiriladi.</p>
+      <button class="btn danger sm" id="delete-data">Maʼlumotlarimni oʻchirish</button>
+    </details>
+  </div>
+</dialog>
+
+<dialog id="tryon-history-dialog" aria-labelledby="th-title">
+  <div class="dialog-head"><h2 id="th-title">Kiyinish xonam</h2><button class="icon-btn" data-close aria-label="Yopish">✕</button></div>
+  <div class="dialog-body" id="th-body"></div>
+</dialog>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+</body>
+</html>

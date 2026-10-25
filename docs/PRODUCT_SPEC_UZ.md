@@ -35,8 +35,10 @@ Hujjat bo‘yicha dastlabki 1–2 yil xaridor va do‘kon uchun bepul. Keyin obu
 ## Privacy
 Suratlar odatda 24 soatdan keyin o‘chirilishi, do‘konlarga ko‘rinmasligi, foydalanuvchida barcha ma'lumotni o‘chirish huquqi bo‘lishi ko‘zda tutiladi. Hosting hududi bo‘yicha O‘zbekiston qonunchiligiga yurist bilan tekshiruv zarur.
 
-## Hozirgi kodning real holati
-- GitHub API va UI: namunaviy ikki do‘kon, to‘rtta mahsulot, mavjud size filtri, stock availability endpoint.
-- Hammasi demo ma'lumot; haqiqiy do‘konlar, xarita koordinatalari, autentifikatsiya va bron yo‘q.
-- AI endpoint ataylab 503 qaytaradi (model va provider ulanmagan).
-- Birinchi bosqichning ishlab chiqarish talablari bajarilmaguncha real bronlar qabul qilinmaydi.
+## Hozirgi kodning real holati (v0.4)
+- Katalog, filtrlar, xarita, eng yaqin doʻkon, haqiqiy qoldiq va bron (tasdiq, muddat) ishlaydi.
+- Doʻkon paneli: roʻyxatdan oʻtish (admin tasdiqlaguncha katalogda koʻrinmaydi), mahsulotlar, rasmlar, bronlar, statistika.
+- Telegram Mini App autentifikatsiyasi, bot xabarlari va tasdiqlash tugmalari (bot token kerak).
+- "Oilamga yuborib soʻray" ovoz berish havolalari.
+- Try-on va AI fotograf: navbat, maxfiylik va limitlar tayyor; tijoriy AI provayder hali ulanmagan.
+- Maʼlumotlar hozircha namuna doʻkonlar (ochiq belgilangan). Haqiqiy doʻkonlar ulangach `SEED_DEMO=0`.

@@ -213,6 +213,7 @@ def reservation_public(r, for_seller=False):
         "status_label": STATUS_LABELS.get(r.status, r.status),
         "created_at": iso(r.created_at), "confirm_by": iso(r.confirm_by), "hold_until": iso(r.hold_until),
         "size": r.variant.size, "product": {"id": r.product.id, "name": r.product.name, "price": r.product.price,
+                                            "category": r.product.category, "color": r.product.color,
                                             "image": image_url(r.product)},
         "shop": {"slug": r.shop.slug, "name": r.shop.name, "address": r.shop.address, "phone": r.shop.phone,
                  "hours": r.shop.hours, "lat": r.shop.lat, "lng": r.shop.lng},

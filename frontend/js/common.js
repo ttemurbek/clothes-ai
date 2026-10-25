@@ -49,7 +49,7 @@ export function el(tag, props = {}, ...children) {
   for (const part of rest.match(/[.#][^.#]+/g) || []) {
     if (part[0] === ".") node.classList.add(part.slice(1)); else node.id = part.slice(1);
   }
-  if (props && (typeof props !== "object" || props instanceof Node || Array.isArray(props))) {
+  if (props != null && (typeof props !== "object" || props instanceof Node || Array.isArray(props))) {
     children.unshift(props); props = {};
   }
   for (const [key, value] of Object.entries(props || {})) {
