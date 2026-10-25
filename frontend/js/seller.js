@@ -168,7 +168,14 @@ function fillCategoryOptions() {
   $("#pe-category").replaceChildren(...me.options.categories.map(c => el("option", { value: c }, c)));
   $("#pe-color").replaceChildren(...me.options.colors.map(c => el("option", { value: c }, c)));
   $("#pe-ai-row").hidden = !me.options.ai_photo;
+  $("#pe-gender").replaceChildren(...me.options.genders.map(g => el("option", { value: g.key }, g.label)));
+  const chip = (group, o) => el("button.chip", { type: "button", dataset: { key: o.key }, "aria-pressed": "false",
+    onclick: e => { const b = e.currentTarget; b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); } }, o.label);
+  $("#pe-seasons").replaceChildren(...me.options.seasons.map(o => chip("seasons", o)));
+  $("#pe-occasions").replaceChildren(...me.options.occasions.map(o => chip("occasions", o)));
 }
+const pressed = id => $$(`#${id} .chip[aria-pressed="true"]`).map(b => b.dataset.key);
+function setPressed(id, keys) { $$(`#${id} .chip`).forEach(b => b.setAttribute("aria-pressed", String(keys.includes(b.dataset.key)))); }
 function variantRow(size = "", stock = 1) {
   const row = el("div.variant-row",
     el("input.input", { placeholder: "Oʻlcham (M, 48…)", value: size, "aria-label": "Oʻlcham", maxlength: "16" }),
@@ -187,6 +194,10 @@ function openEditor(p) {
   $("#pe-price").value = p ? new Intl.NumberFormat("uz-UZ").format(p.price).replace(/,/g, " ") : "";
   $("#pe-description").value = p?.description || "";
   $("#pe-active").checked = p ? p.active : true;
+  $("#pe-gender").value = p?.gender || "unisex";
+  $("#pe-warmth").value = String(p?.warmth ?? 0);
+  setPressed("pe-seasons", p?.seasons || []);
+  setPressed("pe-occasions", p?.occasions || []);
   $("#pe-variants").replaceChildren(...(p ? p.variants.map(v => variantRow(v.size, v.stock)) : [variantRow("M", 1)]));
   $("#pe-preview").hidden = !p?.image;
   if (p?.image) $("#pe-preview").src = p.image;
@@ -222,7 +233,8 @@ $("#pe-form").addEventListener("submit", async e => {
   }).filter(v => v.size);
   const body = { name: $("#pe-name").value.trim(), category: $("#pe-category").value, color: $("#pe-color").value,
     price: Number($("#pe-price").value.replace(/\D/g, "")), description: $("#pe-description").value.trim(),
-    active: $("#pe-active").checked, variants };
+    active: $("#pe-active").checked, variants, gender: $("#pe-gender").value, warmth: Number($("#pe-warmth").value),
+    seasons: pressed("pe-seasons"), occasions: pressed("pe-occasions") };
   const button = $("#pe-save");
   button.disabled = true; button.classList.add("loading");
   try {

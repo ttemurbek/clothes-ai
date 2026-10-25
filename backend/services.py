@@ -62,6 +62,8 @@ def product_card(product, reserved, distance_km=None, with_shop=True):
         "price": product.price, "image": image_url(product), "description": product.description,
         "sizes": sizes, "available_sizes": [x["size"] for x in sizes if x["available"] > 0],
         "in_stock": any(x["available"] > 0 for x in sizes), "shop_id": product.shop_id,
+        "gender": product.gender, "seasons": [s for s in product.seasons.split(",") if s],
+        "occasions": [o for o in product.occasions.split(",") if o], "warmth": product.warmth,
         "demo": product.shop.is_demo,
     }
     if with_shop:

@@ -21,8 +21,10 @@ Bosqichlar konsepsiyadagi "darvoza"larga bogʻliq: keyingisiga faqat shart bajar
 
 ## 2-bosqich (6–12 oy)
 - Boshqa kiyim kategoriyalari
-- Oʻlcham profili (boʻy, vazn, odatiy oʻlcham) va tavsiya
-- Obraz yigʻish (turli doʻkonlardagi kiyimlar)
+- [x] Oʻlcham profili (boʻy, vazn, odatiy oʻlcham) va tavsiya — AI stilist
+- [x] Obraz yigʻish (turli doʻkonlardagi kiyimlar) — AI stilist
+- [ ] Surat orqali teri rangi va qomatni aniqlash (rozilik bilan)
+- [ ] Stilist tavsiyalari sifatini oʻlchash (bronga aylangan tavsiyalar ulushi)
 - 1C / MoySklad sinxronlash
 
 **Darvoza 2:** doʻkonlar platforma olib kelgan xaridorlarni statistikada koʻradi.

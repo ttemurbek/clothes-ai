@@ -38,8 +38,9 @@ def create_app(**overrides):
             seed_demo(s)
 
     from .api import bot, catalog, reservations, seller, shares
+    from .api import stylist as stylist_api
     from .api import tryon as tryon_api
-    for module in (catalog, reservations, seller, tryon_api, shares, bot):
+    for module in (catalog, reservations, seller, tryon_api, shares, stylist_api, bot):
         app.register_blueprint(module.bp)
 
     last_purge = [0.0]

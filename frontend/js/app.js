@@ -246,7 +246,7 @@ function setShopHeader(shop) {
 
 // ---------- product sheet ----------
 let current = null, chosenSize = "";
-async function openProduct(id, push = true) {
+async function openProduct(id, push = true, preferSize = "") {
   const dialog = $("#product-dialog");
   $("#pd-body").replaceChildren(el("div.skeleton", { "aria-hidden": "true" }));
   openDialog(dialog);
@@ -258,7 +258,8 @@ async function openProduct(id, push = true) {
     $("#pd-body").replaceChildren(el("div.empty", el("b", "Mahsulot topilmadi"), e.message));
     return;
   }
-  chosenSize = current.available_sizes.includes(state.size) ? state.size : (current.available_sizes.length === 1 ? current.available_sizes[0] : "");
+  const wanted = [preferSize, state.size].find(s => s && current.available_sizes.includes(s));
+  chosenSize = wanted || (current.available_sizes.length === 1 ? current.available_sizes[0] : "");
   renderProduct();
 }
 
@@ -304,6 +305,7 @@ function renderProduct() {
 $("#product-dialog").addEventListener("close", () => {
   if (location.pathname.startsWith("/p/")) history.replaceState(null, "", (state.shop ? `/shop/${state.shop}` : "/") + location.search);
 });
+window.addEventListener("cai:open-product", e => openProduct(Number(e.detail.id), true, e.detail.size));
 window.addEventListener("popstate", () => {
   const m = location.pathname.match(/^\/p\/(\d+)/);
   if (m) openProduct(Number(m[1]), false);

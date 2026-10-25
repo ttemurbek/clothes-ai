@@ -73,6 +73,11 @@ class Product(Base):
     description: Mapped[str] = mapped_column(Text, default="")
     image: Mapped[str | None] = mapped_column(String(120), nullable=True)
     search_text: Mapped[str] = mapped_column(Text, default="")
+    # Stylist attributes: who it is for, when and where it is worn, how warm it is (0-3)
+    gender: Mapped[str] = mapped_column(String(10), default="unisex", server_default="unisex")
+    seasons: Mapped[str] = mapped_column(String(40), default="", server_default="")
+    occasions: Mapped[str] = mapped_column(String(80), default="", server_default="")
+    warmth: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
@@ -193,6 +198,22 @@ class Database:
 
     def create_all(self):
         Base.metadata.create_all(self.engine)
+        self._add_missing_columns()
+
+    def _add_missing_columns(self):
+        """Additive migration: create columns added to the models after a table already existed."""
+        from sqlalchemy import inspect, text
+        inspector = inspect(self.engine)
+        with self.engine.begin() as conn:
+            for table in Base.metadata.sorted_tables:
+                existing = {c["name"] for c in inspector.get_columns(table.name)}
+                for column in table.columns:
+                    if column.name in existing:
+                        continue
+                    ddl = column.type.compile(dialect=self.engine.dialect)
+                    default = column.server_default.arg if column.server_default is not None else None
+                    clause = f" DEFAULT '{default}'" if isinstance(default, str) else ""
+                    conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {column.name} {ddl}{clause}'))
 
 
 def db():

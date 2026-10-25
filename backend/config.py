@@ -76,6 +76,14 @@ class Config:
         self.PHOTO_API_URL = os.environ.get("PHOTO_API_URL", "")
         self.PHOTO_API_KEY = os.environ.get("PHOTO_API_KEY", "")
 
+        # AI stylist: "rules" (no network) or "anthropic" (Claude picks and explains the outfit)
+        self.ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+        self.STYLIST_PROVIDER = os.environ.get(
+            "STYLIST_PROVIDER", "anthropic" if self.ANTHROPIC_API_KEY else "rules").strip().lower()
+        self.STYLIST_MODEL = os.environ.get("STYLIST_MODEL", "claude-opus-5-5")
+        self.STYLIST_EFFORT = os.environ.get("STYLIST_EFFORT", "low")
+        self.STYLIST_TIMEOUT = float(os.environ.get("STYLIST_TIMEOUT", "45"))
+
         # Telegram
         self.TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
         self.TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "").lstrip("@")

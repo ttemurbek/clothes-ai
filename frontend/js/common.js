@@ -93,7 +93,8 @@ export function formatPhone(value) {
 // ---------- visuals for products without a photo ----------
 const CATEGORY_ICON = {
   "Kelinlik libosi": "👰", "Kechki libos": "👗", "Kostyum": "🤵", "Milliy libos": "🧕",
-  "Koʻylak": "👔", "Ustki kiyim": "🧥", "Bolalar kiyimi": "🧒", "Aksessuar": "👜",
+  "Koʻylak": "👔", "Ustki kiyim": "🧥", "Bolalar kiyimi": "🧒", "Aksessuar": "🧣",
+  "Sviter va kofta": "🧶", "Shim va yubka": "👖", "Poyabzal": "🥾",
 };
 export const COLOR_HEX = {
   "Oq": "#f4f1ea", "Qora": "#1d1b1f", "Bej": "#d9c4a5", "Kulrang": "#9a9a9f", "Koʻk": "#2f4f8f",

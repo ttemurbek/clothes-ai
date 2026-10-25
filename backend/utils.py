@@ -8,9 +8,24 @@ import unicodedata
 from flask import jsonify, session
 
 CATEGORIES = [
-    "Kelinlik libosi", "Kechki libos", "Kostyum", "Milliy libos", "Koʻylak",
-    "Ustki kiyim", "Bolalar kiyimi", "Aksessuar",
+    "Kelinlik libosi", "Kechki libos", "Kostyum", "Milliy libos", "Ustki kiyim", "Sviter va kofta",
+    "Koʻylak", "Shim va yubka", "Poyabzal", "Aksessuar", "Bolalar kiyimi",
 ]
+GENDERS = {"ayol": "Ayollar", "erkak": "Erkaklar", "unisex": "Hamma uchun", "bola": "Bolalar"}
+SEASONS = {"qish": "Qish", "bahor": "Bahor", "yoz": "Yoz", "kuz": "Kuz"}
+OCCASIONS = {
+    "oqish": "Oʻqish", "ish": "Ish / ofis", "kundalik": "Kundalik", "toy": "Toʻy",
+    "bayram": "Bayram / kechki tadbir", "sport": "Sport / sayr", "sayohat": "Sayohat",
+}
+
+
+def csv_values(value, allowed):
+    """Keep only known keys from a list or comma-separated string, in the allowed order."""
+    items = value if isinstance(value, list) else str(value or "").split(",")
+    wanted = {str(x).strip().lower() for x in items}
+    return ",".join(k for k in allowed if k in wanted)
+
+
 COLORS = [
     "Oq", "Qora", "Bej", "Kulrang", "Koʻk", "Moviy", "Yashil", "Qizil", "Pushti",
     "Binafsha", "Oltin rang", "Kumush rang", "Jigarrang", "Rang-barang",

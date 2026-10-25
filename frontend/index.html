@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/styles.css">
 <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
 <script type="module" src="/js/app.js"></script>
+<script type="module" src="/js/stylist.js"></script>
 </head>
 <body class="has-tabbar">
 <div class="demo-bar" id="demo-bar" hidden>Hozir namuna doʻkonlar va mahsulotlar koʻrsatilmoqda — haqiqiy bron qabul qilinmaydi. <a href="/seller">Doʻkoningizni qoʻshing →</a></div>
@@ -19,6 +20,7 @@
   <div class="wrap">
     <a href="/" class="brand" aria-label="Clothes AI bosh sahifa">CLOTHES<span>AI</span></a>
     <nav class="topnav" aria-label="Asosiy">
+      <a href="#stylist">AI stilist</a>
       <a href="#catalog">Katalog</a>
       <a href="#map-section">Xarita</a>
       <a href="#how">Qanday ishlaydi</a>
@@ -41,6 +43,7 @@
         <input id="hero-q" type="search" placeholder="Kelinlik libosi, kostyum, atlas…" autocomplete="off" enterkeyhint="search">
         <button class="btn primary sm" type="submit">Qidirish</button>
       </form>
+      <p class="mt"><a class="btn accent" href="#stylist">✨ AI stilistdan soʻrash</a></p>
       <div class="hero-steps"><span><b>1.</b> Toping</span><span><b>2.</b> Oʻzingizda koʻring</span><span><b>3.</b> Bron qiling</span><span><b>4.</b> Doʻkonda oling</span></div>
     </div>
     <div class="hero-art" aria-hidden="true">
@@ -48,6 +51,54 @@
       <div class="tag t1">📍<span><b>1,2 km</b>M oʻlcham bor</span></div>
       <div class="tag t2">✅<span><b>Bron tasdiqlandi</b>24 soat olib qoʻyiladi</span></div>
     </div>
+  </div>
+</section>
+
+<section class="section stylist" id="stylist">
+  <div class="wrap">
+    <div class="stylist-grid">
+      <div class="stylist-intro">
+        <p class="eyebrow">✨ AI stilist</p>
+        <h2>Sizga nima yarashadi — AI tahlil qiladi</h2>
+        <p class="muted">Boʻyingiz, vazningiz, tana rangingiz, fasl va qayerga borishingizni yozing. AI qomatingiz va rangingizga mos toʻplamni shahardagi doʻkonlarda <b>hozir bor</b> kiyimlardan, sizning oʻlchamingizda yigʻib beradi.</p>
+        <ul class="stylist-points">
+          <li>📏 Oʻlchamingizni taxmin qiladi (S/M/L va 46/48…)</li>
+          <li>🎨 Teri rangingizga mos ranglarni tanlaydi</li>
+          <li>❄️ Fasl va joyga qarab issiqlik va uslubni hisobga oladi</li>
+          <li>🛍 Har bir kiyim qaysi doʻkonda borligini koʻrsatadi</li>
+        </ul>
+        <p class="hint">Maʼlumotlaringiz serverda saqlanmaydi — faqat shu brauzerda eslab qolinadi.</p>
+      </div>
+      <form class="box stylist-form" id="stylist-form" novalidate>
+        <div class="field"><span>Jins</span><div class="chips" id="st-gender" role="radiogroup" aria-label="Jins">
+          <button type="button" class="chip" data-value="erkak" role="radio" aria-pressed="false">👨 Erkak</button>
+          <button type="button" class="chip" data-value="ayol" role="radio" aria-pressed="false">👩 Ayol</button></div></div>
+        <div class="grid-2">
+          <label class="field"><span>Boʻy (sm)</span><input class="input" id="st-height" type="number" inputmode="numeric" min="120" max="220" placeholder="175"></label>
+          <label class="field"><span>Vazn (kg)</span><input class="input" id="st-weight" type="number" inputmode="decimal" min="30" max="200" placeholder="60"></label>
+        </div>
+        <div class="field"><span>Tana rangi</span><div class="skin-row" id="st-skin" role="radiogroup" aria-label="Tana rangi"></div></div>
+        <div class="field"><span>Fasl</span><div class="chips" id="st-season" role="radiogroup" aria-label="Fasl"></div></div>
+        <div class="field"><span>Qayerga kiyasiz</span><div class="chips wrap-chips" id="st-occasion" role="radiogroup" aria-label="Qayerga"></div></div>
+        <details class="st-more"><summary>Qoʻshimcha (ixtiyoriy)</summary>
+          <div class="variants mt">
+            <div class="grid-2">
+              <label class="field"><span>Byudjet</span><select class="select" id="st-budget">
+                <option value="">Cheklovsiz</option><option value="1000000">1 mln soʻmgacha</option><option value="2000000">2 mln soʻmgacha</option>
+                <option value="3000000">3 mln soʻmgacha</option><option value="5000000">5 mln soʻmgacha</option></select></label>
+              <label class="field"><span>Odatiy oʻlchamingiz</span><select class="select" id="st-size">
+                <option value="">Bilmayman — AI hisoblasin</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select></label>
+              <label class="field"><span>Oyoq kiyim oʻlchami</span><input class="input" id="st-shoe" type="number" inputmode="numeric" min="30" max="50" placeholder="42"></label>
+            </div>
+            <label class="field"><span>Istaklaringiz</span><input class="input" id="st-note" maxlength="200" placeholder="Masalan: sport uslubini yoqtiraman, qora rangni yoqtirmayman"></label>
+            <label class="check"><input type="checkbox" id="st-near"> <span>Yaqin doʻkonlarni afzal koʻrish (joylashuv soʻraladi)</span></label>
+          </div>
+        </details>
+        <p class="form-error" id="st-error" role="alert"></p>
+        <button class="btn primary block" type="submit" id="st-submit">✨ AI tahlil qilsin</button>
+      </form>
+    </div>
+    <div id="stylist-result" class="stylist-result" aria-live="polite" hidden></div>
   </div>
 </section>
 
@@ -147,6 +198,7 @@
 </footer>
 
 <nav class="tabbar" aria-label="Pastki menyu">
+  <a href="#stylist"><span aria-hidden="true">✨</span>Stilist</a>
   <a href="#catalog"><span aria-hidden="true">🛍</span>Katalog</a>
   <a href="#map-section"><span aria-hidden="true">📍</span>Xarita</a>
   <a href="#" data-open="tryon-history"><span aria-hidden="true">🪞</span>Kiyinish</a>

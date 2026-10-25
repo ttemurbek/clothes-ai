@@ -19,9 +19,25 @@ toʻgʻri kiyim va toʻgʻri doʻkon bilan bogʻlaymiz. Konsepsiya: [docs/PRODUC
 | Virtual kiyib koʻrish: asinxron vazifalar, maxfiylik, kunlik limit | ✅ infratuzilma; AI provayder ulanmagan |
 | AI fotograf (fonni tozalash, studiya rasmi) | ✅ infratuzilma; `PHOTO_PROVIDER` kerak |
 | Maxfiylik: asl surat darhol, natija 24 soatda oʻchadi; "Maʼlumotlarimni oʻchirish" | ✅ |
-| Oʻlcham profili, obraz yigʻish, onlayn toʻlov | ⏳ 2–3-bosqich |
+| **AI stilist**: boʻy, vazn, tana rangi, fasl va qayerga → oʻlcham, ranglar, mavjud kiyimlardan toʻplam | ✅ qoidalar; Claude kalit bilan |
+| Onlayn toʻlov va yetkazish | ⏳ 3-bosqich |
 
 Hozir bazada **namuna** doʻkonlar va mahsulotlar bor (sahifada ochiq belgilangan). `SEED_DEMO=0` bilan oʻchiriladi.
+
+## AI stilist
+
+`POST /api/stylist` (`height_cm`, `weight_kg`, `gender`, `skin_tone`, `season`, `occasion`, ixtiyoriy `budget`,
+`usual_size`, `shoe_size`, `note`, `lat`/`lng`) → tahlil (BMI, qomat, taxminiy oʻlcham S/M/L va 46/48, teri rangiga
+mos va mos boʻlmagan ranglar, fasl va joy talablari, maslahatlar) va **faqat hozir qoldigʻi bor** kiyimlardan
+slot boʻyicha toʻplam: ustki kiyim → issiq qatlam → koʻylak → shim → poyabzal → aksessuar (toʻy/bayram uchun asosiy libos).
+
+- Kalitsiz ishlaydi: qoidalar oʻlcham, fasl, joy, rang va qomatga qarab baho beradi (`backend/stylist.py`).
+- `ANTHROPIC_API_KEY` berilsa, Claude (`STYLIST_MODEL`, standart `claude-opus-5-5`) eng yaxshi nomzodlar ichidan
+  yakuniy toʻplamni tanlaydi va sababini oʻzbekcha tushuntiradi. Javob JSON sxema boʻyicha tekshiriladi, faqat
+  nomzodlar roʻyxatidagi mahsulotlar qabul qilinadi; xato yoki vaqt tugasa qoidalar natijasi qaytadi.
+  Rad javobi uchun server-side fallback (`fallbacks: "default"`) yoqilgan.
+- Profil serverda saqlanmaydi (faqat brauzerda eslab qolinadi). AI yoqilganda boʻy/vazn/rang/istak Claude'ga yuboriladi.
+- Doʻkonlar mahsulotga "kim uchun", fasl, qayerga va issiqlik darajasini belgilaydi — stilist shularga tayanadi.
 
 ## Lokal ishga tushirish
 

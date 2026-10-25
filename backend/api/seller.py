@@ -16,7 +16,8 @@ from ..security import rate_limit
 from ..seed import product_search_text
 from ..services import (apply_seller_action, expire_reservations, product_card, reservation_public,
                         reserved_counts, shop_stats, sort_sizes)
-from ..utils import CATEGORIES, COLORS, clean_str, error, norm_size, normalize_phone, parse_float, parse_int
+from ..utils import (CATEGORIES, COLORS, GENDERS, OCCASIONS, SEASONS, clean_str, csv_values, error, norm_size,
+                     normalize_phone, parse_float, parse_int)
 
 bp = Blueprint("seller", __name__, url_prefix="/api/seller")
 
@@ -37,6 +38,9 @@ def _me(seller):
         "seller": {"id": seller.id, "login": seller.login, "name": seller.name},
         "shop": {**shop.public(), "status": shop.status, "telegram_linked": bool(shop.telegram_chat_id)},
         "options": {"categories": CATEGORIES, "colors": COLORS,
+                    "genders": [{"key": k, "label": v} for k, v in GENDERS.items()],
+                    "seasons": [{"key": k, "label": v} for k, v in SEASONS.items()],
+                    "occasions": [{"key": k, "label": v} for k, v in OCCASIONS.items()],
                     "ai_photo": cfg.PHOTO_PROVIDER != "none",
                     "telegram_bot": cfg.TELEGRAM_BOT_USERNAME or None},
     }
@@ -198,6 +202,14 @@ def _apply_product(product, data):
         product.price = parse_int(data["price"], -1, 0, 1_000_000_000)
     if "active" in data:
         product.active = bool(data["active"])
+    if "gender" in data:
+        product.gender = data["gender"] if data["gender"] in GENDERS else "unisex"
+    if "seasons" in data:
+        product.seasons = csv_values(data["seasons"], SEASONS)
+    if "occasions" in data:
+        product.occasions = csv_values(data["occasions"], OCCASIONS)
+    if "warmth" in data:
+        product.warmth = parse_int(data["warmth"], 0, 0, 3)
     if len(product.name or "") < 2:
         return "Mahsulot nomini yozing."
     if not product.category:

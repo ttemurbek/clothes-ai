@@ -182,3 +182,112 @@ def test_pages_and_headers(client):
     assert client.get("/nope").status_code == 404
     assert client.get("/api/nope").json["code"] == "HTTP_404"
     assert client.get("/media/products/../../clothes.db").status_code == 404
+
+
+STUDENT = {"height_cm": 175, "weight_kg": 60, "gender": "erkak", "skin_tone": "bugdoy",
+           "season": "qish", "occasion": "oqish"}
+
+
+def test_stylist_winter_student(client):
+    r = client.post("/api/stylist", json=STUDENT)
+    assert r.status_code == 200
+    data = r.json
+    assert data["engine"] == "rules"
+    assert data["analysis"]["size"]["letter"] == "S" and data["analysis"]["size"]["numeric"] == "46"
+    slots = {i["slot"]: i["product"] for i in data["outfit"]}
+    assert {"outer", "layer", "bottom", "shoes"} <= set(slots)
+    assert slots["outer"]["warmth"] >= 2 and "qish" in slots["outer"]["seasons"]
+    for product in slots.values():
+        assert product["gender"] in ("erkak", "unisex")
+    assert data["total_price"] == sum(p["price"] for p in slots.values())
+
+
+def test_stylist_budget_and_validation(client):
+    fits = client.post("/api/stylist", json={**STUDENT, "budget": 2000000}).json
+    assert fits["total_price"] <= 2000000 and not fits["over_budget"]
+    assert {i["slot"] for i in fits["outfit"]} >= {"outer", "bottom", "shoes"}
+    tight = client.post("/api/stylist", json={**STUDENT, "budget": 500000}).json
+    assert tight["over_budget"] is True  # a winter coat alone costs more: say so instead of hiding it
+    assert client.post("/api/stylist", json={**STUDENT, "height_cm": 400}).json["code"] == "VALIDATION"
+    assert client.post("/api/stylist", json={**STUDENT, "skin_tone": "x"}).status_code == 400
+
+
+def test_stylist_wedding_picks_formal_wear(client):
+    data = client.post("/api/stylist", json={**STUDENT, "gender": "ayol", "occasion": "toy", "weight_kg": 55,
+                                             "height_cm": 163}).json
+    full = next(i for i in data["outfit"] if i["slot"] == "full")
+    assert full["product"]["category"] in ("Kelinlik libosi", "Kechki libos", "Milliy libos")
+
+
+def test_stylist_uses_claude_choice(tmp_path, monkeypatch):
+    import json
+    import types
+    import anthropic
+
+    app = create_app(TESTING=True, SECRET_KEY="t", DATA_DIR=tmp_path, DATABASE_URL="",
+                     STYLIST_PROVIDER="anthropic", ANTHROPIC_API_KEY="test-key")
+    c = app.test_client()
+    rules = c.post("/api/stylist", json=STUDENT)  # first call: see what the candidates are
+    seen = {}
+
+    class FakeMessages:
+        def create(self, **kwargs):
+            seen.update(kwargs)
+            request = json.loads(kwargs["messages"][0]["content"].split("\n", 1)[1])
+            outer = [x for x in request["candidates"] if x["slot"] == "outer"]
+            pick = outer[-1]["product_id"]
+            body = {"summary": "Sizga issiq va qulay toʻplam.", "tips": ["Qatlamlab kiying."], "color_note": "Yashil yarashadi.",
+                    "items": [{"slot": "outer", "product_id": pick, "why": "Eng issiq."},
+                              {"slot": "outer", "product_id": 999999, "why": "bogus"}]}
+            return types.SimpleNamespace(stop_reason="end_turn",
+                                         content=[types.SimpleNamespace(type="text", text=json.dumps(body))])
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            self.beta = types.SimpleNamespace(messages=FakeMessages())
+
+    monkeypatch.setattr(anthropic, "Anthropic", FakeClient)
+    data = c.post("/api/stylist", json=STUDENT).json
+    assert data["engine"] == "ai" and data["summary"].startswith("Sizga")
+    outer = next(i for i in data["outfit"] if i["slot"] == "outer")
+    assert outer["why"] == "Eng issiq."
+    assert seen["model"] == "claude-opus-5-5"
+    assert seen["output_config"]["format"]["type"] == "json_schema"
+    assert len(data["outfit"]) == len(rules.json["outfit"])  # slots the model skipped keep the rule pick
+
+
+def test_stylist_falls_back_when_claude_fails(tmp_path, monkeypatch):
+    import anthropic
+
+    app = create_app(TESTING=True, SECRET_KEY="t", DATA_DIR=tmp_path, DATABASE_URL="",
+                     STYLIST_PROVIDER="anthropic", ANTHROPIC_API_KEY="test-key")
+
+    class Broken:
+        def __init__(self, **kwargs):
+            raise anthropic.AnthropicError("no credentials")
+
+    monkeypatch.setattr(anthropic, "Anthropic", Broken)
+    data = app.test_client().post("/api/stylist", json=STUDENT).json
+    assert data["engine"] == "rules" and data["outfit"]
+
+
+def test_seller_sets_stylist_attributes(client):
+    _seller(client)
+    p = client.post("/api/seller/products", json={"name": "Kurtka", "category": "Ustki kiyim", "price": 500000,
+                                                  "gender": "erkak", "seasons": ["qish", "nope"], "occasions": "oqish,ish",
+                                                  "warmth": 3, "variants": [{"size": "M", "stock": 1}]}).json["product"]
+    assert p["seasons"] == ["qish"] and p["occasions"] == ["oqish", "ish"] and p["warmth"] == 3
+
+
+def test_migration_adds_columns(tmp_path):
+    import sqlite3
+    db = tmp_path / "old.db"
+    con = sqlite3.connect(db)
+    con.execute("CREATE TABLE products (id INTEGER PRIMARY KEY, shop_id INTEGER, name TEXT, category TEXT, color TEXT,"
+                " price INTEGER, description TEXT, image TEXT, search_text TEXT, active BOOLEAN, created_at DATETIME,"
+                " updated_at DATETIME)")
+    con.commit()
+    con.close()
+    create_app(TESTING=True, SECRET_KEY="t", DATA_DIR=tmp_path, DATABASE_URL=f"sqlite:///{db}", SEED_DEMO=False)
+    cols = {r[1] for r in sqlite3.connect(db).execute("PRAGMA table_info(products)")}
+    assert {"gender", "seasons", "occasions", "warmth"} <= cols
