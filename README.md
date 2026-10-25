@@ -20,6 +20,7 @@ toʻgʻri kiyim va toʻgʻri doʻkon bilan bogʻlaymiz. Konsepsiya: [docs/PRODUC
 | AI fotograf (fonni tozalash, studiya rasmi) | ✅ infratuzilma; `PHOTO_PROVIDER` kerak |
 | Maxfiylik: asl surat darhol, natija 24 soatda oʻchadi; "Maʼlumotlarimni oʻchirish" | ✅ |
 | **AI stilist**: boʻy, vazn, tana rangi, fasl va qayerga → oʻlcham, ranglar, mavjud kiyimlardan toʻplam | ✅ qoidalar; Claude kalit bilan |
+| **3D kiyinish xonasi**: boʻy/vazn/jins/tana rangidan 3D maneken, tanlangan kiyimlar kiydiriladi, 360° aylantirish | ✅ brauzerda (Three.js) |
 | Onlayn toʻlov va yetkazish | ⏳ 3-bosqich |
 
 Hozir bazada **namuna** doʻkonlar va mahsulotlar bor (sahifada ochiq belgilangan). `SEED_DEMO=0` bilan oʻchiriladi.
@@ -38,6 +39,16 @@ slot boʻyicha toʻplam: ustki kiyim → issiq qatlam → koʻylak → shim → 
   Rad javobi uchun server-side fallback (`fallbacks: "default"`) yoqilgan.
 - Profil serverda saqlanmaydi (faqat brauzerda eslab qolinadi). AI yoqilganda boʻy/vazn/rang/istak Claude'ga yuboriladi.
 - Doʻkonlar mahsulotga "kim uchun", fasl, qayerga va issiqlik darajasini belgilaydi — stilist shularga tayanadi.
+
+## 3D kiyinish xonasi
+
+`frontend/js/fitting3d.js` brauzerda (WebGL, `frontend/vendor/three.module.min.js` — Three.js r160, MIT, npm
+paketidagi fayl bilan sha256 tekshirilgan) maneken quradi: boʻy balandlik koʻlamini, vazn (BMI) gavda kengligini,
+jins proporsiyalarni, tana rangi teri tusini belgilaydi. Kiyimlar kategoriya va nomidan shakl oladi (puxovik —
+qavatli, palto — tizzagacha, jinsi, yubka, libos, kostyum, botinka, sharf, ryukzak…), rangi va naqshi
+(katak, atlas, trikotaj, denim) mahsulotdan. Qatlamlar tartibi: shim → koʻylak → libos → sviter → ustki kiyim.
+Aylantirish (sichqoncha/barmoq), yaqinlashtirish, old/yon/orqa koʻrinish, kiyimni yoqish-oʻchirish, oʻlchamni
+oʻzgartirish va rasmga olish bor. Bu siluet, rang va uygʻunlikni koʻrsatadi; matoning aniq koʻrinishi emas.
 
 ## Lokal ishga tushirish
 

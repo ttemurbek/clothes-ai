@@ -1,5 +1,6 @@
 // AI stylist: profile form -> analysis + outfit assembled from in-stock products.
 import { $, $$, api, el, fmtKm, fmtPrice, productArt, shareLink, store, swatch, toast } from "./common.js";
+import { openFitting } from "./fitting3d.js";
 
 const SKIN = { oq: "#f2dcc9", bugdoy: "#d4a373", qoracha: "#a26b45", qora: "#5b3a26" };
 const form = $("#stylist-form");
@@ -117,11 +118,13 @@ function render(data) {
       el("p.muted.small.my", a.color_note),
       el("div.label", "Eng mos"), swatches(a.palette.best),
       el("div.label.mt", "Ehtiyot boʻling"), swatches(a.palette.avoid, ".avoid")),
-    el("div.section-head.mt", el("div", el("p.eyebrow", "Sizning toʻplamingiz"), el("h2", "AI tanlagan kiyimlar"))),
+    el("div.section-head.mt", el("div", el("p.eyebrow", "Sizning toʻplamingiz"), el("h2", "AI tanlagan kiyimlar")),
+      data.outfit.length ? el("button.btn.primary", { onclick: () => openFitting(last.outfit, last.profile) }, "🧍 3D'da kiyib koʻrish") : null),
     outfit,
     data.missing.length ? el("div.notice.small.mt", "Katalogda hozircha mos topilmadi: ",
       data.missing.map(m => m.slot_label).join(", "), ". Doʻkonlar qoʻshilgan sari tavsiya toʻliqlashadi.") : null,
     el("div.row-gap.mt",
+      data.outfit.length ? el("button.btn.primary", { onclick: () => openFitting(last.outfit, last.profile) }, "🧍 3D'da kiyib koʻrish") : null,
       data.outfit.length ? el("button.btn.accent", { onclick: shareOutfit }, "👨‍👩‍👧 Oilamga yuborib soʻray") : null,
       el("button.btn", { onclick: () => form.scrollIntoView({ behavior: "smooth" }) }, "Maʼlumotlarni oʻzgartirish")),
     el("div.box.mt", el("h3", "💡 Maslahatlar"), el("ul.tips", a.tips.map(t => el("li", t)))),

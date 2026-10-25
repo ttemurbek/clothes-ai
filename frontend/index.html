@@ -13,6 +13,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
 <script type="module" src="/js/app.js"></script>
 <script type="module" src="/js/stylist.js"></script>
+<script type="module" src="/js/fitting3d.js"></script>
 </head>
 <body class="has-tabbar">
 <div class="demo-bar" id="demo-bar" hidden>Hozir namuna doʻkonlar va mahsulotlar koʻrsatilmoqda — haqiqiy bron qabul qilinmaydi. <a href="/seller">Doʻkoningizni qoʻshing →</a></div>
@@ -249,6 +250,32 @@
       <p class="my">Barcha try-on suratlari, ulashgan havolalaringiz va ovozlaringiz oʻchiriladi; bronlardagi ism va telefon anonimlashtiriladi.</p>
       <button class="btn danger sm" id="delete-data">Maʼlumotlarimni oʻchirish</button>
     </details>
+  </div>
+</dialog>
+
+<!-- 3D fitting room -->
+<dialog id="fitting-dialog" class="wide" aria-labelledby="fit-title">
+  <div class="dialog-head"><div><h2 id="fit-title">3D kiyinish xonasi</h2><p class="hint">Barmoq yoki sichqoncha bilan aylantiring, ikki barmoq / gʻildirak bilan yaqinlashtiring</p></div>
+    <button class="icon-btn" data-close aria-label="Yopish">✕</button></div>
+  <div class="dialog-body fit-body">
+    <div class="fit-stage-wrap">
+      <div id="fit-stage" class="fit-stage" role="img" aria-label="Kiyimdagi 3D maneken"></div>
+      <div class="fit-toolbar">
+        <button class="chip" id="fit-rotate" type="button" aria-pressed="true">⟳ Aylanish</button>
+        <button class="chip" type="button" data-view="front">Old</button>
+        <button class="chip" type="button" data-view="side">Yon</button>
+        <button class="chip" type="button" data-view="back">Orqa</button>
+        <button class="chip" type="button" id="fit-zoom-in" aria-label="Yaqinlashtirish">＋</button>
+        <button class="chip" type="button" id="fit-zoom-out" aria-label="Uzoqlashtirish">－</button>
+        <button class="chip" type="button" id="fit-photo">📸</button>
+      </div>
+    </div>
+    <div class="fit-side">
+      <div class="label">Kiyimlar</div>
+      <div id="fit-items" class="fit-items"></div>
+      <details class="st-more" open><summary>Mening oʻlchamlarim</summary><div id="fit-profile" class="mt"></div></details>
+      <p class="hint">3D maneken boʻy, vazn va tana rangingizdan quriladi: kiyimning siluet, rang va qatlamlari koʻrinadi. Mato va bichimning aniq koʻrinishi — doʻkonda yoki suratdagi AI kiyib koʻrishda.</p>
+    </div>
   </div>
 </dialog>
 

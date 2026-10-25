@@ -3,6 +3,7 @@ import {
   $, $$, api, apiBlob, closeDialog, el, fmtKm, fmtLeft, fmtPrice, fmtTime, formatPhone, openDialog,
   productArt, shareLink, store, swatch, tg, toast,
 } from "./common.js";
+import { tryOn3d } from "./fitting3d.js";
 
 const PAGE = 24;
 const state = {
@@ -283,7 +284,8 @@ function renderProduct() {
         el("div.row-gap",
           el("button.btn.primary.grow", { disabled: !chosenSize, onclick: () => openReserve() },
             chosenSize ? `${chosenSize} oʻlchamni bron qilish` : "Oʻlchamni tanlang"),
-          el("button.btn", { onclick: () => openTryOn(p) }, "🪞 Kiyib koʻrish")),
+          el("button.btn.accent", { onclick: () => tryOn3d({ ...p, recommended_size: chosenSize || null }) }, "🧍 3D kiyib koʻrish"),
+          el("button.btn", { onclick: () => openTryOn(p) }, "📷 Suratda")),
         el("div.row-gap",
           el("button.btn.ghost.sm", { onclick: () => { toggleCompare(p.id); renderProduct(); } }, inCompare ? "✓ Tanlovda" : "＋ Solishtirishga"),
           el("button.btn.ghost.sm", { onclick: () => shareProducts([p.id]) }, "👨‍👩‍👧 Oilamga soʻray")),

@@ -451,3 +451,31 @@ table.list tr:last-child td { border-bottom: 0; }
   .skin-row { gap: 6px; }
 }
 .size-pill { margin-left: 8px; vertical-align: 2px; }
+
+/* ---------- 3D fitting room ---------- */
+#fitting-dialog { width: min(1100px, calc(100% - 24px)); }
+.fit-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; align-items: start; }
+.fit-stage-wrap { position: relative; }
+.fit-stage { height: min(68dvh, 640px); border-radius: var(--radius); overflow: hidden; cursor: grab;
+  background: radial-gradient(circle at 50% 35%, #ffffff 0, #f1ebf5 45%, #ddd2e6 100%); }
+:root[data-theme="dark"] .fit-stage { background: radial-gradient(circle at 50% 35%, #4a4252 0, #2a2530 55%, #1a171e 100%); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fit-stage { background: radial-gradient(circle at 50% 35%, #4a4252 0, #2a2530 55%, #1a171e 100%); } }
+.fit-stage:active { cursor: grabbing; }
+.fit-stage canvas { width: 100%; height: 100%; display: block; }
+.fit-loading { height: 100%; display: grid; place-items: center; color: var(--muted); font-weight: 650; }
+.fit-toolbar { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.fit-toolbar .chip { background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(6px); }
+.fit-side { display: flex; flex-direction: column; gap: 12px; }
+.fit-items { display: flex; flex-direction: column; gap: 8px; }
+.fit-item { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+.fit-item input { width: 18px; height: 18px; accent-color: var(--accent); }
+.fit-item-text { display: flex; flex-direction: column; min-width: 0; }
+.fit-item-text b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 760px) {
+  #fitting-dialog { width: 100%; }
+  .fit-body { grid-template-columns: 1fr; }
+  .fit-stage { height: 56dvh; }
+}
+.fit-toolbar .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+@media (max-width: 760px) { .fit-toolbar { position: static; margin-top: 8px; } .fit-toolbar .chip { padding: 7px 11px; } }

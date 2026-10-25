@@ -291,3 +291,11 @@ def test_migration_adds_columns(tmp_path):
     create_app(TESTING=True, SECRET_KEY="t", DATA_DIR=tmp_path, DATABASE_URL=f"sqlite:///{db}", SEED_DEMO=False)
     cols = {r[1] for r in sqlite3.connect(db).execute("PRAGMA table_info(products)")}
     assert {"gender", "seasons", "occasions", "warmth"} <= cols
+
+
+def test_3d_assets_served(client):
+    r = client.get("/vendor/three.module.min.js")
+    assert r.status_code == 200 and b"Three.js Authors" in r.data[:300]
+    assert client.get("/js/fitting3d.js").status_code == 200
+    page = client.get("/").data
+    assert b'id="fitting-dialog"' in page and b"fitting3d.js" in page
