@@ -8,7 +8,6 @@ function display(items) {
   return items.filter(p => (!q || (p.name + " " + p.category + " " + p.color).toLowerCase().includes(q)) && (!size || (p.stock_by_size?.[size] || 0) > 0));
 }
 function render(items) {
-  try {
     $("products").replaceChildren(...items.map((p, i) => {
       const article = document.createElement("article");
       article.className = "product";
