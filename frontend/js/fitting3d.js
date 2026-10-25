@@ -1,7 +1,7 @@
 // 3D fitting room: a mannequin built from the person's height, weight, gender and skin tone, dressed in
 // the chosen products (shape from category/name, colour and pattern from the product), rotatable 360°.
 // It shows fit, silhouette, colours and layering — not the exact fabric of the real garment.
-import { $, $$, closeDialog, el, fmtPrice, openDialog, store, toast } from "./common.js";
+import { $, $$, closeDialog, el, fmtPrice, openDialog, productArt, store, toast } from "./common.js";
 
 let THREE = null;
 const SKIN = { oq: 0xf0d5c0, bugdoy: 0xd2a070, qoracha: 0x9c6640, qora: 0x5a3724 };
@@ -110,12 +110,87 @@ function garmentMaterial(product) {
   else if (/katak|flanel/.test(text)) pattern = "plaid";
   else if (/jinsi|denim/.test(text)) pattern = "denim";
   else if (/trikotaj|sviter|jun|toʻqilgan|kofta/.test(text)) pattern = "knit";
-  if (pattern) { m.map = patternTexture(pattern, base); m.color = 0xffffff; }
+  if (pattern && !product.image) { m.map = patternTexture(pattern, base); m.color = 0xffffff; }
   if (/charm|teri/.test(text)) { m.roughness = 0.38; }
   if (/puxovik|bomber/.test(text)) { m.roughness = 0.45; }
   if (/atlas|ipak|shifon|paetka|baxmal/.test(text)) { m.roughness = 0.35; m.metalness = 0.08; }
   if (/zarbof|paetka|oltin/.test(text) || product.color === "Oltin rang") { m.metalness = 0.55; m.roughness = 0.35; }
-  return new THREE.MeshStandardMaterial(m);
+  const material = new THREE.MeshStandardMaterial(m);
+  if (product.image) material.userData = { photo: product.image, shade: 1 };
+  return material;
+}
+
+// The real garment's fabric: a centre crop of the product photo becomes the texture, its average colour the tint.
+const fabrics = new Map();
+function photoFabric(url) {
+  if (!fabrics.has(url)) {
+    fabrics.set(url, new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const W = img.naturalWidth, Hh = img.naturalHeight;
+        const [sx, sy, sw, sh] = fabricRegion(img);
+        const c = document.createElement("canvas");
+        c.width = c.height = 256;
+        const g = c.getContext("2d");
+        g.drawImage(img, sx * W, sy * Hh, sw * W, sh * Hh, 0, 0, 256, 256);
+        const px = g.getImageData(0, 0, 256, 256).data;
+        let r = 0, gg = 0, b = 0;
+        for (let i = 0; i < px.length; i += 16) { r += px[i]; gg += px[i + 1]; b += px[i + 2]; }
+        const n = px.length / 16;
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.MirroredRepeatWrapping;
+        tex.repeat.set(3, 3);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.userData.cached = true;
+        resolve({ tex, color: [r / n / 255, gg / n / 255, b / n / 255] });
+      };
+      img.onerror = reject;
+      img.src = url;
+    }));
+  }
+  return fabrics.get(url);
+}
+
+/** Find the patch of the photo that is most "garment" and least background (estimated from the border). */
+function fabricRegion(img) {
+  const N = 96, c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(img, 0, 0, N, N);
+  const px = g.getImageData(0, 0, N, N).data;
+  const at = (x, y) => (y * N + x) * 4;
+  let br = 0, bg = 0, bb = 0, bn = 0;
+  for (let i = 0; i < N; i++) for (const [x, y] of [[i, 0], [i, N - 1], [0, i], [N - 1, i]]) {
+    const k = at(x, y); br += px[k]; bg += px[k + 1]; bb += px[k + 2]; bn++;
+  }
+  br /= bn; bg /= bn; bb /= bn;
+  const cw = 0.24, ch = 0.2;
+  let best = [0.38, 0.35, cw, ch], bestScore = -1;
+  for (let cy = 0.25; cy <= 0.75; cy += 0.05) for (let cx = 0.25; cx <= 0.75; cx += 0.05) {
+    let garment = 0, total = 0;
+    for (let y = Math.floor((cy - ch / 2) * N); y < (cy + ch / 2) * N; y++) {
+      for (let x = Math.floor((cx - cw / 2) * N); x < (cx + cw / 2) * N; x++) {
+        const k = at(x, y);
+        const d = Math.abs(px[k] - br) + Math.abs(px[k + 1] - bg) + Math.abs(px[k + 2] - bb);
+        garment += d > 70 ? 1 : 0; total++;
+      }
+    }
+    const score = garment / total - Math.hypot(cx - 0.5, cy - 0.45) * 0.3;   // prefer the centre on ties
+    if (score > bestScore) { bestScore = score; best = [cx - cw / 2, cy - ch / 2, cw, ch]; }
+  }
+  return best;
+}
+
+function applyPhotoFabrics(root) {
+  root.traverse(o => {
+    const m = o.material;
+    if (!o.isMesh || !m?.userData?.photo) return;
+    photoFabric(m.userData.photo).then(({ tex }) => {
+      m.map = tex;
+      m.color.setScalar(m.userData.shade);
+      m.needsUpdate = true;
+    }).catch(() => { /* keep the catalogue colour */ });
+  });
 }
 
 // ---------------- garment shapes ----------------
@@ -184,6 +259,7 @@ function torsoPiece(group, body, from, to, add, mat, flare) {
 function shade(mat, k) {
   const m = mat.clone();
   if (!m.map) m.color.multiplyScalar(k);
+  if (mat.userData.photo) m.userData = { ...mat.userData, shade: k };
   return m;
 }
 
@@ -447,7 +523,10 @@ class Stage {
   setContent(objects, H) {
     for (const child of [...this.turntable.children]) {
       this.turntable.remove(child);
-      child.traverse(o => { o.geometry?.dispose(); if (o.material) { o.material.map?.dispose(); o.material.dispose(); } });
+      child.traverse(o => {
+        o.geometry?.dispose();
+        if (o.material) { if (!o.material.map?.userData.cached) o.material.map?.dispose(); o.material.dispose(); }
+      });
     }
     objects.forEach(o => this.turntable.add(o));
     this.target = H * 0.50; this.distance = H * 2.1; this.H = H;
@@ -493,7 +572,7 @@ export async function openFitting(items, profile = null) {
 }
 
 const snapshot = p => ({ id: p.id, name: p.name, category: p.category, color: p.color, price: p.price,
-  description: p.description || "", recommended_size: p.recommended_size || null });
+  description: p.description || "", recommended_size: p.recommended_size || null, image: p.image || null });
 
 /** Add one product to the saved 3D wardrobe (same slot is replaced) and open the fitting room. */
 export function tryOn3d(product) {
@@ -516,6 +595,7 @@ function rebuild() {
   if (!hasFull && !active.some(x => x.slot === "bottom")) objects.push(buildGarment({ name: "asos shim", color: "Kulrang", category: "Shim va yubka" }, "bottom", body));
   if (!hasFull && !active.some(x => ["top", "layer", "outer"].includes(x.slot))) objects.push(buildGarment({ name: "asos futbolka", color: "Oq", category: "Koʻylak" }, "top", body));
   stage.setContent(objects, body.H);
+  applyPhotoFabrics(stage.turntable);
   renderList(body);
 }
 
@@ -524,6 +604,7 @@ function renderList(body) {
   $("#fit-items").replaceChildren(
     ...state.items.map(x => el("label.fit-item",
       el("input", { type: "checkbox", checked: x.on, onchange: e => { x.on = e.target.checked; rebuild(); } }),
+      productArt(x.product, "art.fit-thumb"),
       el("span.fit-item-text", el("b", x.product.name), el("small.muted", `${SLOT_LABEL[x.slot]} · ${x.product.color} · ${fmtPrice(x.product.price)}`)),
       el("button.btn.sm.ghost", { type: "button", onclick: e => { e.preventDefault(); closeDialog($("#fitting-dialog"));
         window.dispatchEvent(new CustomEvent("cai:open-product", { detail: { id: x.product.id, size: x.product.recommended_size } })); } }, "Bron →"))),

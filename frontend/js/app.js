@@ -275,7 +275,7 @@ function renderProduct() {
   const mapsUrl = s.lat != null ? `https://yandex.uz/maps/?pt=${s.lng},${s.lat}&z=16&l=map` : null;
   $("#pd-body").replaceChildren(
     el("div.pd",
-      productArt(p),
+      el("div.pd-media", productArt(p), photoCredit(p)),
       el("div.pd-info",
         el("h2#pd-title", p.name),
         el("div.row-gap", el("span.pd-price", fmtPrice(p.price)), el("span.card-meta", swatch(p.color), p.color)),
@@ -302,6 +302,14 @@ function renderProduct() {
       el("div.similar.mt", p.similar.map(x => el("button.card", { type: "button", onclick: () => openProduct(x.id, false) },
         productArt(x), el("div.card-body", el("h3", x.name), el("div.price", fmtPrice(x.price))))))) : null,
   );
+}
+
+function photoCredit(p) {
+  const c = p.photo_credit;
+  if (!c) return null;
+  return el("p.credit", "📷 ", c.source_url ? el("a", { href: c.source_url, target: "_blank", rel: "noopener" }, c.author || "Muallif") : c.author,
+    " · ", c.license_url ? el("a", { href: c.license_url, target: "_blank", rel: "noopener" }, c.license) : c.license,
+    " · namuna surat");
 }
 
 $("#product-dialog").addEventListener("close", () => {

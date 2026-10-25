@@ -1,4 +1,5 @@
 """Inventory, reservations and statistics logic shared by the buyer, seller and bot code."""
+import json
 import logging
 import threading
 import time
@@ -51,6 +52,15 @@ def available(variant, reserved):
     return max(0, variant.stock - reserved.get(variant.id, 0))
 
 
+def _credit(product):
+    if not product.image or not product.photo_credit:
+        return None
+    try:
+        return json.loads(product.photo_credit)
+    except ValueError:
+        return None
+
+
 def image_url(product):
     return f"/media/products/{product.image}" if product.image else None
 
@@ -64,6 +74,7 @@ def product_card(product, reserved, distance_km=None, with_shop=True):
         "in_stock": any(x["available"] > 0 for x in sizes), "shop_id": product.shop_id,
         "gender": product.gender, "seasons": [s for s in product.seasons.split(",") if s],
         "occasions": [o for o in product.occasions.split(",") if o], "warmth": product.warmth,
+        "photo_credit": _credit(product),
         "demo": product.shop.is_demo,
     }
     if with_shop:

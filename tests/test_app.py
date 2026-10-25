@@ -299,3 +299,23 @@ def test_3d_assets_served(client):
     assert client.get("/js/fitting3d.js").status_code == 200
     page = client.get("/").data
     assert b'id="fitting-dialog"' in page and b"fitting3d.js" in page
+
+
+def test_demo_photos_have_credits(client):
+    items = client.get("/api/products?limit=60").json["items"]
+    with_photo = [p for p in items if p["image"]]
+    assert len(with_photo) >= 30  # 32 of 39 demo products have a photo
+    for p in with_photo:
+        credit = p["photo_credit"]
+        assert credit and credit["author"] and credit["license"] and credit["source_url"].startswith("http")
+        assert client.get(p["image"]).status_code == 200
+
+
+def test_remove_demo(tmp_path):
+    app = create_app(TESTING=True, SECRET_KEY="t", DATA_DIR=tmp_path, DATABASE_URL="")
+    media = tmp_path / "media" / "products"
+    assert any(media.iterdir())
+    result = app.test_cli_runner().invoke(args=["remove-demo", "--yes"])
+    assert result.exit_code == 0, result.output
+    assert app.test_client().get("/api/products").json["total"] == 0
+    assert not any(media.iterdir())

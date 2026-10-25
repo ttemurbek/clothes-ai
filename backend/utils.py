@@ -56,7 +56,12 @@ def norm_size(value):
 
 
 def size_key(size):
-    return SIZE_ORDER.index(size) if size in SIZE_ORDER else len(SIZE_ORDER)
+    """Letters in garment order, then every numeric size ascending (shoes 36, 37…, suits 46, 48…), then the rest."""
+    if size.isdigit():
+        return 100 + int(size)
+    if size == "Standart":
+        return 10_000
+    return SIZE_ORDER.index(size) if size in SIZE_ORDER else 5_000
 
 
 def normalize_phone(value):

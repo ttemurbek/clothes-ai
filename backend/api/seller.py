@@ -349,6 +349,7 @@ def upload_image(seller, product_id):
     save_webp(image.convert("RGBA") if image.mode == "RGBA" else image, _media_dir() / name,
               cfg.PRODUCT_IMAGE_SIZE)
     old, product.image = product.image, name
+    product.photo_credit = ""
     db().commit()
     _remove_image(old)
     return jsonify(product=_seller_card(product), ai_used=ai_used, ai_note=ai_note)

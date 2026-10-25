@@ -78,6 +78,8 @@ class Product(Base):
     seasons: Mapped[str] = mapped_column(String(40), default="", server_default="")
     occasions: Mapped[str] = mapped_column(String(80), default="", server_default="")
     warmth: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # JSON {"author", "license", "license_url", "source_url"} for openly licensed demo photos
+    photo_credit: Mapped[str] = mapped_column(Text, default="", server_default="")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)

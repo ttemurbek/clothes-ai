@@ -35,7 +35,7 @@ def create_app(**overrides):
     app.extensions["clothes_db"] = database
     if cfg.SEED_DEMO:
         with database.Session() as s:
-            seed_demo(s)
+            seed_demo(s, cfg.DATA_DIR / "media" / "products")
 
     from .api import bot, catalog, reservations, seller, shares
     from .api import stylist as stylist_api
@@ -133,7 +133,24 @@ def _register_cli(app):
     def seed_cmd():
         """Insert demo shops and products into an empty database."""
         with database.Session() as s:
-            click.echo("Demo maʼlumotlar qoʻshildi." if seed_demo(s) else "Bazada maʼlumot bor, oʻtkazib yuborildi.")
+            changed = seed_demo(s, cfg.DATA_DIR / "media" / "products")
+            click.echo("Demo maʼlumotlar yangilandi." if changed else "Oʻzgarish yoʻq.")
+
+    @app.cli.command("remove-demo")
+    @click.confirmation_option(prompt="Barcha namuna doʻkonlar, mahsulotlar va ularning suratlari oʻchirilsinmi?")
+    def remove_demo_cmd():
+        """Delete demo shops with their products, reservations, stats and photos (run before launch)."""
+        from .models import Product
+        media = cfg.DATA_DIR / "media" / "products"
+        with database.Session() as s:
+            shops = s.scalars(select(Shop).where(Shop.is_demo.is_(True))).all()
+            images = [p.image for shop in shops for p in s.scalars(select(Product).where(Product.shop_id == shop.id)) if p.image]
+            for shop in shops:
+                s.delete(shop)
+            s.commit()
+        for name in images:
+            (media / name).unlink(missing_ok=True)
+        click.echo(f"Oʻchirildi: {len(shops)} ta namuna doʻkon, {len(images)} ta surat. Endi SEED_DEMO=0 qoʻying.")
 
     @app.cli.command("shops")
     def shops_cmd():
