@@ -340,8 +340,9 @@ function buildGarment(product, slot, body) {
       break;
     case "dress": case "dress-knee": case "gown": case "robe": {
       const hem = kind === "gown" ? 0.0 : kind === "dress-knee" ? 0.30 : kind === "robe" ? 0.16 : 0.18;
-      torsoPiece(g, body, 0.52, 0.83, 0.006, mat);
-      const top = radiusAt(body.torso, 0.53) + 0.008;
+      const over = kind === "robe" ? 0.028 : 0.006;   // a robe is worn over shirts and sweaters
+      torsoPiece(g, body, 0.52, 0.835, over, mat);
+      const top = radiusAt(body.torso, 0.53) + over + 0.002;
       const spread = kind === "gown" ? 0.20 : 0.07;
       const skirt = [[top, 0.53], [top + spread * 0.35, 0.36], [top + spread, hem]];
       g.add(mesh(lathe(skirt, hem, 0.53, 0, body.H), mat, body));
@@ -587,7 +588,11 @@ function rebuild() {
   const objects = [buildMannequin(body, state.profile.skin_tone)];
   const active = state.items.filter(x => x.on);
   const hasFull = active.some(x => x.slot === "full");
-  for (const slot of ORDER) {
+  // a robe (chopon) or a suit jacket is worn over a sweater; dresses go under it
+  const full = active.find(x => x.slot === "full");
+  const outerFull = full && ["robe", "suit"].includes(kindOf(full.product, "full"));
+  const order = outerFull ? ORDER.filter(s => s !== "full").toSpliced(ORDER.indexOf("layer"), 0, "full") : ORDER;
+  for (const slot of order) {
     const item = active.find(x => x.slot === slot);
     if (item && !(hasFull && (slot === "top" || slot === "bottom"))) objects.push(buildGarment(item.product, slot, body));
   }
