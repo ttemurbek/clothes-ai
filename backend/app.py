@@ -1,81 +1,197 @@
-"""Clothes AI starter API: no user photographs are persisted."""
-import os
-from flask import Flask, jsonify, request, send_from_directory
+"""Clothes AI: one catalog of city shops + virtual fitting room + reservation at the nearest shop."""
+import logging
+import re
+import time
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SHOPS = [
-    {"id": "demo-a", "name": "Namuna butik A", "city": "Toshkent", "address": "Demo do‘kon, haqiqiy manzil yo‘q", "verified": False},
-    {"id": "demo-b", "name": "Namuna butik B", "city": "Toshkent", "address": "Demo do‘kon, haqiqiy manzil yo‘q", "verified": False},
-]
-PRODUCTS = [
-    {"shop_id": "demo-a", "stock_by_size": {"S": 1, "M": 2, "L": 0}, "id": "blazer-01", "name": "Minimal Blazer", "category": "Jaket", "price": 549000, "color": "Qora", "sizes": ["S", "M", "L"]},
-    {"shop_id": "demo-b", "stock_by_size": {"XS": 1, "S": 1, "M": 0}, "id": "dress-01", "name": "Silk Evening Dress", "category": "Ko‘ylak", "price": 790000, "color": "Binafsha", "sizes": ["XS", "S", "M"]},
-    {"shop_id": "demo-a", "stock_by_size": {"S": 2, "M": 2, "L": 3, "XL": 1}, "id": "shirt-01", "name": "Classic Linen Shirt", "category": "Ko‘ylak", "price": 329000, "color": "Oq", "sizes": ["S", "M", "L", "XL"]},
-    {"shop_id": "demo-b", "stock_by_size": {"S": 0, "M": 1, "L": 2}, "id": "coat-01", "name": "Essential Trench Coat", "category": "Palto", "price": 895000, "color": "Bej", "sizes": ["S", "M", "L"]},
-]
+import click
+from flask import Flask, g, jsonify, request, send_from_directory
+from sqlalchemy import select, text
+from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.security import generate_password_hash
 
-def create_app():
-    app = Flask(__name__, static_folder=os.path.join(ROOT, "frontend"), static_url_path="")
-    app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
+from . import tryon
+from .config import ROOT, Config
+from .models import Database, Seller, Shop
+from .security import add_headers, check_origin
+from .seed import seed_demo
+from .telegram import Bot
+
+VERSION = "0.4.0"
+FRONTEND = ROOT / "frontend"
+
+
+def create_app(**overrides):
+    cfg = Config(**overrides)
+    app = Flask(__name__, static_folder=str(FRONTEND), static_url_path="")
+    app.config.update(cfg.as_flask())
+    app.config["CLOTHES"] = cfg
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    if cfg.TRUST_PROXY:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+    database = Database(cfg.DATABASE_URL)
+    database.create_all()
+    app.extensions["clothes_db"] = database
+    if cfg.SEED_DEMO:
+        with database.Session() as s:
+            seed_demo(s)
+
+    from .api import bot, catalog, reservations, seller, shares
+    from .api import tryon as tryon_api
+    for module in (catalog, reservations, seller, tryon_api, shares, bot):
+        app.register_blueprint(module.bp)
+
+    last_purge = [0.0]
+
+    @app.before_request
+    def before():
+        if time.monotonic() - last_purge[0] > 600 and not app.testing:
+            last_purge[0] = time.monotonic()
+            try:
+                tryon.purge_expired(app)
+            except Exception:  # cleanup must never break a request
+                app.logger.exception("purge failed")
+        return check_origin()
+
+    @app.after_request
+    def after(response):
+        return add_headers(response)
+
+    @app.teardown_appcontext
+    def close_db(_exc):
+        session = g.pop("db", None)
+        if session is not None:
+            session.close()
+
+    # ---------- pages ----------
+    def page(name, status=200):
+        response = send_from_directory(FRONTEND, name)
+        response.headers["Cache-Control"] = "no-cache"
+        return response, status
 
     @app.get("/")
-    def home():
-        return send_from_directory(app.static_folder, "index.html")
+    @app.get("/p/<int:_id>")
+    @app.get("/shop/<_slug>")
+    def home(**_):
+        return page("index.html")
+
+    @app.get("/s/<_token>")
+    def share_page(_token):
+        return page("share.html")
+
+    @app.get("/seller")
+    @app.get("/seller.html")
+    def seller_page():
+        return page("seller.html")
+
+    @app.get("/privacy")
+    def privacy_page():
+        return page("privacy.html")
+
+    @app.get("/media/products/<name>")
+    def media(name):
+        if not re.fullmatch(r"[0-9a-f]{32}\.webp", name):
+            return jsonify(error="Topilmadi."), 404
+        return send_from_directory(cfg.DATA_DIR / "media" / "products", name, max_age=30 * 24 * 3600)
 
     @app.get("/api/health")
     def health():
-        return jsonify(status="ok", app="clothes-ai", version="0.3.0", demo=True)
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            db_ok = True
+        except Exception:
+            db_ok = False
+        return jsonify(status="ok" if db_ok else "degraded", app="clothes-ai", version=VERSION,
+                       database=db_ok, tryon=cfg.TRYON_PROVIDER), 200 if db_ok else 503
 
-    @app.get("/api/shops")
-    def shops():
-        return jsonify(items=SHOPS, demo=True)
+    # ---------- errors ----------
+    @app.errorhandler(HTTPException)
+    def http_error(exc):
+        messages = {404: "Sahifa topilmadi.", 405: "Bu amal ruxsat etilmagan.",
+                    413: "Fayl 8 MB dan katta boʻlmasin.", 429: "Juda koʻp soʻrov."}
+        if request.path.startswith("/api/") or exc.code != 404:
+            return jsonify(error=messages.get(exc.code, exc.name), code=f"HTTP_{exc.code}"), exc.code
+        return page("404.html", 404)
 
-    @app.get("/api/products")
-    def products():
-        q = request.args.get("q", "").casefold().strip()
-        size = request.args.get("size", "").upper().strip()
-        shop_id = request.args.get("shop_id", "").strip()
-        items = [p for p in PRODUCTS if (not q or q in (p["name"] + " " + p["category"] + " " + p["color"]).casefold()) and (not size or p["stock_by_size"].get(size, 0) > 0) and (not shop_id or p["shop_id"] == shop_id)]
-        return jsonify(items=items, demo=True)
+    @app.errorhandler(Exception)
+    def server_error(exc):
+        app.logger.exception("unhandled error")
+        return jsonify(error="Serverda xatolik. Birozdan keyin urinib koʻring.", code="SERVER_ERROR"), 500
 
-    @app.get("/api/availability")
-    def availability():
-        item = next((p for p in PRODUCTS if p["id"] == request.args.get("product_id")), None)
-        if item is None:
-            return jsonify(error="Mahsulot topilmadi."), 404
-        size = request.args.get("size", "").upper()
-        if size not in item["sizes"]:
-            return jsonify(error="O‘lcham mavjud emas."), 400
-        shop = next(s for s in SHOPS if s["id"] == item["shop_id"])
-        return jsonify(demo=True, shop=shop, size=size, stock=item["stock_by_size"][size])
-
-    @app.post("/api/reservations")
-    def reserve():
-        return jsonify(code="DEMO_ONLY", error="Haqiqiy bron hali yoqilmagan."), 503
-
-    @app.post("/api/try-on")
-    def try_on():
-        photo = request.files.get("photo")
-        product_id = request.form.get("product_id", "")
-        if photo is None or not photo.filename:
-            return jsonify(error="Rasm tanlanmagan."), 400
-        if not any(p["id"] == product_id for p in PRODUCTS):
-            return jsonify(error="Kiyim topilmadi."), 400
-        if photo.mimetype not in ("image/jpeg", "image/png", "image/webp"):
-            return jsonify(error="Faqat JPEG, PNG yoki WebP qabul qilinadi."), 415
-        header = photo.stream.read(16)
-        photo.stream.seek(0)
-        valid = (header.startswith(b"\xff\xd8\xff") or header.startswith(b"\x89PNG\r\n\x1a\n") or (header.startswith(b"RIFF") and header[8:12] == b"WEBP"))
-        if not valid:
-            return jsonify(error="Rasm formati noto‘g‘ri."), 415
-        return jsonify(error="AI model hali ulanmagan. Surat saqlanmadi.", code="AI_NOT_CONFIGURED"), 503
-
-    @app.errorhandler(413)
-    def too_large(_):
-        return jsonify(error="Rasm 8 MB dan katta bo‘lmasin."), 413
-
+    _register_cli(app)
     return app
 
-app = create_app()
-if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", "5000")), debug=os.environ.get("FLASK_DEBUG") == "1")
+
+def _register_cli(app):
+    database = app.extensions["clothes_db"]
+    cfg = app.config["CLOTHES"]
+
+    @app.cli.command("seed-demo")
+    def seed_cmd():
+        """Insert demo shops and products into an empty database."""
+        with database.Session() as s:
+            click.echo("Demo maʼlumotlar qoʻshildi." if seed_demo(s) else "Bazada maʼlumot bor, oʻtkazib yuborildi.")
+
+    @app.cli.command("shops")
+    def shops_cmd():
+        """List shops and their status."""
+        with database.Session() as s:
+            for shop in s.scalars(select(Shop).order_by(Shop.id)):
+                demo = "demo" if shop.is_demo else "    "
+                click.echo(f"{shop.id:>4}  {shop.status:<8} {demo}  {shop.slug}  {shop.name}")
+
+    def _set_status(slug, status, founding=False):
+        with database.Session() as s:
+            shop = s.scalar(select(Shop).where(Shop.slug == slug))
+            if shop is None:
+                raise click.ClickException("Doʻkon topilmadi")
+            shop.status = status
+            if founding:
+                shop.founding_partner = True
+            s.commit()
+            click.echo(f"{shop.name}: {status}")
+
+    @app.cli.command("approve-shop")
+    @click.argument("slug")
+    @click.option("--founding", is_flag=True, help="Mark as a founding partner (asoschi hamkor)")
+    def approve_cmd(slug, founding):
+        """Publish a shop's catalog after checking its details."""
+        _set_status(slug, "active", founding)
+
+    @app.cli.command("block-shop")
+    @click.argument("slug")
+    def block_cmd(slug):
+        """Hide a shop and lock its seller panel."""
+        _set_status(slug, "blocked")
+
+    @app.cli.command("reset-password")
+    @click.argument("login")
+    @click.password_option()
+    def reset_password_cmd(login, password):
+        """Set a seller's password (prompted, never echoed)."""
+        with database.Session() as s:
+            seller = s.scalar(select(Seller).where(Seller.login == login.lower()))
+            if seller is None:
+                raise click.ClickException("Sotuvchi topilmadi")
+            seller.password_hash = generate_password_hash(password)
+            s.commit()
+        click.echo("Parol yangilandi.")
+
+    @app.cli.command("purge")
+    def purge_cmd():
+        """Delete expired try-on photos and results now."""
+        click.echo(f"Oʻchirildi: {tryon.purge_expired(app)}")
+
+    @app.cli.command("set-webhook")
+    def webhook_cmd():
+        """Point the Telegram bot at PUBLIC_URL/telegram/webhook and set the menu button."""
+        if not (cfg.TELEGRAM_BOT_TOKEN and cfg.TELEGRAM_WEBHOOK_SECRET and cfg.PUBLIC_URL.startswith("https://")):
+            raise click.ClickException("TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET va https PUBLIC_URL kerak")
+        bot = Bot(cfg.TELEGRAM_BOT_TOKEN)
+        ok = bot.call("setWebhook", url=cfg.PUBLIC_URL + "/telegram/webhook", secret_token=cfg.TELEGRAM_WEBHOOK_SECRET,
+                      allowed_updates=["message", "callback_query"])
+        bot.call("setChatMenuButton", menu_button={"type": "web_app", "text": "Katalog",
+                                                   "web_app": {"url": cfg.PUBLIC_URL + "/"}})
+        click.echo("Webhook oʻrnatildi." if ok else "Xato: webhook oʻrnatilmadi (loglarni koʻring).")
